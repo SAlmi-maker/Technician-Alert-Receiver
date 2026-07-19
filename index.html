@@ -174,7 +174,7 @@ body{min-height:100vh}
     <div class="login-error" id="loginError">Please enter your name</div>
     <label>Your Name</label>
     <input type="text" id="loginName" placeholder="e.g. Ahmed, Mohammed, Youssef..." autofocus>
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">Enter Portal</button>
+    <button class="login-btn" id="loginBtn" onclick="doLogin(true)">Enter Portal</button>
   </div>
 </div>
 
@@ -186,6 +186,7 @@ body{min-height:100vh}
       <div><h1>Technician Portal</h1><small>Maintenance Alert Receiver</small></div>
     </div>
     <div class="header-right">
+      <button class="btn-logout" id="enableNotifBtn" style="display:none;background:var(--navy);color:#fff;border-color:var(--navy)" onclick="enablePushFromBtn()">Enable Notifications</button>
       <div class="conn-pill"><span class="conn-dot" id="connDot"></span><span id="connLabel">Connecting...</span></div>
       <div class="tech-badge"><div class="avatar" id="techAvatar"></div><span id="techDisplayName"></span></div>
       <button class="btn-logout" onclick="doLogout()">Logout</button>
@@ -230,7 +231,7 @@ var lastNotifTime=0;
 var VAPID_PUBLIC='BOSXF6lnCxxvTWtgpB8uMQEDb0d77qCdlslzdFvr_UQa06KFFgoQlq3FxkEX0coRr8AajgWcqkJcx2LO6t-RPQ8';
 
 // ══ LOGIN ══
-window.doLogin=function(){
+window.doLogin=function(isUserGesture){
   var name=document.getElementById('loginName').value.trim();
   if(!name){document.getElementById('loginError').style.display='';return}
   document.getElementById('loginError').style.display='none';
@@ -241,7 +242,8 @@ window.doLogin=function(){
   document.getElementById('techDisplayName').textContent=name;
   document.getElementById('techAvatar').textContent=name.charAt(0).toUpperCase();
   initSupabase();
-  subscribePush();
+  if(isUserGesture)subscribePush();
+  else checkPushStatus();
 };
 
 window.doLogout=function(){
@@ -302,13 +304,31 @@ async function unsubscribePush(){
   }catch(e){console.error('[MMS-Tech] Push unsubscribe failed',e)}
 }
 
-// Enter key on login
-document.getElementById('loginName').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
+async function checkPushStatus(){
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){return}
+    var regs=await navigator.serviceWorker.getRegistrations();
+    for(var i=0;i<regs.length;i++){
+      var sub=await regs[i].pushManager.getSubscription();
+      if(sub){console.log('[MMS-Tech] Push already subscribed');return}
+    }
+    document.getElementById('enableNotifBtn').style.display='';
+    console.log('[MMS-Tech] No push subscription found, showing enable button');
+  }catch(e){console.error('[MMS-Tech] checkPush failed',e)}
+}
 
-// Auto-login if name saved
+window.enablePushFromBtn=function(){
+  document.getElementById('enableNotifBtn').style.display='none';
+  subscribePush();
+};
+
+// Enter key on login
+document.getElementById('loginName').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin(true)});
+
+// Auto-login if name saved (no user gesture, so don't request push yet)
 (function(){
   var saved=localStorage.getItem('tech_name');
-  if(saved){document.getElementById('loginName').value=saved;doLogin()}
+  if(saved){document.getElementById('loginName').value=saved;doLogin(false)}
 })();
 
 // ══ SUPABASE ══
