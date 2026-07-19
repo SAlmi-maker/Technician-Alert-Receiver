@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log a Failure</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#003D7C;--navy-light:#0057B8;--accent:#0BBBEF;--red:#DC2626;--yellow:#D97706;--green:#16A34A;--bg:#F1F5F9;--surface:#fff;--text:#0F172A;--text-sec:#475569;--text-muted:#94A3B8;--border:#E2E8F0;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06)}
+html{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--text);background:var(--bg)}
+body{min-height:100vh;padding:16px;max-width:520px;margin:0 auto}
+
+.header{text-align:center;margin-bottom:20px}
+.header h1{font-size:1.2rem;font-weight:800;color:var(--navy)}
+.header p{font-size:.8rem;color:var(--text-muted);margin-top:2px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h2{font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.72rem;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;font-family:inherit;color:var(--text);transition:border .15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(11,187,239,.1)}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+.toggle-row{display:flex;gap:6px}
+.toggle-row button{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text-muted);transition:all .15s}
+.toggle-row button.active-yes{background:var(--green);color:#fff;border-color:var(--green)}
+.toggle-row button.active-no{background:var(--red);color:#fff;border-color:var(--red)}
+.toggle-row button.active-amber{background:var(--yellow);color:#fff;border-color:var(--yellow)}
+.toggle-row button.active-blue{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+.btn-submit{width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-submit:hover{background:var(--navy-light)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+
+.success-msg{display:none;background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.2);border-radius:var(--radius);padding:16px;text-align:center;margin-bottom:16px}
+.success-msg h3{color:var(--green);font-size:.9rem;margin-bottom:4px}
+.success-msg p{font-size:.78rem;color:var(--text-sec)}
+.success-msg button{margin-top:10px;padding:8px 20px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit}
+
+.recent-list{max-height:300px;overflow-y:auto}
+.recent-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:.78rem}
+.recent-item:last-child{border:none}
+.recent-item strong{color:var(--navy)}
+.recent-item span{color:var(--text-muted);font-size:.7rem}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 20px;border-radius:var(--radius);font-size:.82rem;font-weight:600;z-index:999;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Log a Machine Failure</h1>
+  <p>Fill in what you just fixed</p>
+</div>
+
+<div class="success-msg" id="successMsg">
+  <h3>Failure logged!</h3>
+  <p>Data saved successfully.</p>
+  <button onclick="resetForm()">Log Another</button>
+</div>
+
+<div class="card" id="formCard">
+  <h2>Failure Details</h2>
+  <form id="failureForm" onsubmit="return submitForm(event)">
+    <div class="field">
+      <label>Machine Name / ID *</label>
+      <input type="text" id="fMachine" placeholder="e.g. CP-04, UW-02" required>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Line / Zone</label>
+        <input type="text" id="fZone" placeholder="e.g. Line A">
+      </div>
+      <div class="field">
+        <label>Your Name *</label>
+        <input type="text" id="fTech" placeholder="Technician name" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Failure Type *</label>
+      <select id="fType" required>
+        <option value="">Select...</option>
+        <option value="Electrical">Electrical</option>
+        <option value="Mechanical">Mechanical</option>
+        <option value="Sensor">Sensor</option>
+        <option value="PLC/Software">PLC / Software</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Severity *</label>
+      <div class="toggle-row">
+        <button type="button" id="sevTotal" onclick="setSev('Total Failure')">Total Failure</button>
+        <button type="button" id="sevPartial" onclick="setSev('Partial')">Partial</button>
+        <button type="button" id="sevNone" onclick="setSev('No Impact')">No Impact</button>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Production still works?</label>
+        <div class="toggle-row">
+          <button type="button" id="prodYes" onclick="setProd(true)">Yes</button>
+          <button type="button" id="prodNo" onclick="setProd(false)">No</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Maintenance Type *</label>
+        <div class="toggle-row">
+          <button type="button" id="mtCorrective" onclick="setMT('Corrective')">Corrective</button>
+          <button type="button" id="mtPreventive" onclick="setMT('Preventive')">Preventive</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Diagnosis Time (min)</label>
+        <input type="number" id="fDiag" min="0" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Repair Time (min)</label>
+        <input type="number" id="fRepair" min="0" placeholder="0">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Parts Replaced</label>
+      <input type="text" id="fParts" placeholder="e.g. Crimp die, Fuse 5A">
+    </div>
+
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="fNotes" rows="2" placeholder="Any details..."></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">Submit</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Recent Submissions</h2>
+  <div class="recent-list" id="recentList">
+    <div style="text-align:center;color:var(--text-muted);font-size:.8rem;padding:16px">Loading...</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+'use strict';
+
+var SB_URL='https://tnmiqirhcmrletclftjo.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubWlxaXJoY21ybGV0Y2xmdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTkyMDIsImV4cCI6MjA5NjQ5NTIwMn0.4yerG6tvGT_8BeoRzCmzeZrae1BlFNpjB6LHpc7gdQA';
+var sb=supabase.createClient(SB_URL,SB_KEY);
+
+var sev='Total Failure',prodWorks=false,maintType='Corrective';
+
+window.setSev=function(v){sev=v;['sevTotal','sevPartial','sevNone'].forEach(function(id){document.getElementById(id).className=''});var map={'Total Failure':'sevTotal','Partial':'sevPartial','No Impact':'sevNone'};document.getElementById(map[v]).className='active-no'};
+window.setProd=function(v){prodWorks=v;document.getElementById('prodYes').className=v?'active-yes':'';document.getElementById('prodNo').className=!v?'active-no':''};
+window.setMT=function(v){maintType=v;document.getElementById('mtCorrective').className=v==='Corrective'?'active-blue':'';document.getElementById('mtPreventive').className=v==='Preventive'?'active-amber':''};
+
+setSev('Total Failure');setProd(false);setMT('Corrective');
+
+function genId(){return Date.now().toString(36)+Math.random().toString(36).substr(2,6)}
+function toast(msg){var el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);setTimeout(function(){el.remove()},2600)}
+
+window.submitForm=function(e){
+  e.preventDefault();
+  var machine=document.getElementById('fMachine').value.trim();
+  var tech=document.getElementById('fTech').value.trim();
+  var type=document.getElementById('fType').value;
+  if(!machine||!tech||!type)return;
+  var rec={
+    id:genId(),
+    machine:machine,
+    zone:document.getElementById('fZone').value.trim(),
+    type:type,
+    severity:sev,
+    production_works:prodWorks,
+    maintenance_type:maintType,
+    diag_time:parseInt(document.getElementById('fDiag').value)||0,
+    repair_time:parseInt(document.getElementById('fRepair').value)||0,
+    parts:document.getElementById('fParts').value.trim(),
+    technician:tech,
+    notes:document.getElementById('fNotes').value.trim(),
+    created_at:new Date().toISOString()
+  };
+  document.getElementById('submitBtn').disabled=true;
+  document.getElementById('submitBtn').textContent='Saving...';
+  sb.from('failures').insert(rec).then(function(r){
+    document.getElementById('submitBtn').disabled=false;
+    document.getElementById('submitBtn').textContent='Submit';
+    if(r.error){console.error(r.error);toast('Error: '+r.error.message);return}
+    document.getElementById('formCard').style.display='none';
+    document.getElementById('successMsg').style.display='';
+    toast('Failure logged!');
+    loadRecent();
+  });
+};
+
+window.resetForm=function(){
+  document.getElementById('failureForm').reset();
+  document.getElementById('formCard').style.display='';
+  document.getElementById('successMsg').style.display='none';
+  setSev('Total Failure');setProd(false);setMT('Corrective');
+};
+
+function loadRecent(){
+  sb.from('failures').select('*').order('created_at',{ascending:false}).limit(20).then(function(r){
+    var el=document.getElementById('recentList');
+    if(r.error||!r.data||!r.data.length){el.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:.8rem;padding:16px">No failures logged yet.</div>';return}
+    el.innerHTML=r.data.map(function(f){
+      var d=new Date(f.created_at);
+      var dt=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      return '<div class="recent-item"><strong>'+esc(f.machine)+'</strong> &mdash; '+esc(f.type)+' ('+esc(f.severity)+')<br><span>'+esc(f.technician)+' &middot; '+dt+(f.repair_time?' &middot; '+f.repair_time+' min repair':'')+'</span></div>';
+    }).join('');
+  });
+}
+
+function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+loadRecent();
+})();
+</script>
+</body>
+</html>
