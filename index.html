@@ -266,17 +266,33 @@ function urlBase64ToUint8Array(base64String){
 }
 
 async function subscribePush(){
+  var statusEl=document.getElementById('enableNotifBtn');
   try{
-    if(!('serviceWorker' in navigator)||!('PushManager' in window)){console.log('[MMS-Tech] Push not supported');return}
+    console.log('[MMS-Tech] Step 1: Checking browser support...');
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+      console.log('[MMS-Tech] Push not supported on this browser');
+      if(statusEl){statusEl.textContent='Not supported on this browser';statusEl.style.background='#DC2626';statusEl.style.display=''}
+      return;
+    }
+    console.log('[MMS-Tech] Step 2: Registering service worker...');
     var reg=await navigator.serviceWorker.register('sw.js');
-    console.log('[MMS-Tech] Service worker registered');
+    console.log('[MMS-Tech] Step 2 OK: SW registered, scope:',reg.scope);
+    console.log('[MMS-Tech] Step 3: Requesting notification permission...');
     var permission=await Notification.requestPermission();
-    if(permission!=='granted'){console.log('[MMS-Tech] Notification permission denied');return}
+    console.log('[MMS-Tech] Step 3 result:',permission);
+    if(permission!=='granted'){
+      console.log('[MMS-Tech] Notification permission denied');
+      if(statusEl){statusEl.textContent='Permission denied - tap to retry';statusEl.style.background='#DC2626';statusEl.style.display=''}
+      return;
+    }
+    console.log('[MMS-Tech] Step 4: Subscribing to push...');
     var existing=await reg.pushManager.getSubscription();
-    if(existing)await existing.unsubscribe();
+    if(existing){await existing.unsubscribe();console.log('[MMS-Tech] Unsubscribed old subscription')}
     var sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC)});
+    console.log('[MMS-Tech] Step 4 OK: Push subscribed');
     var subJson=sub.toJSON();
-    await sb.from('push_subscriptions').upsert({
+    console.log('[MMS-Tech] Step 5: Saving subscription to Supabase...');
+    var saveResult=await sb.from('push_subscriptions').upsert({
       endpoint:subJson.endpoint,
       p256dh:subJson.keys.p256dh,
       auth:subJson.keys.auth,
@@ -284,8 +300,11 @@ async function subscribePush(){
       user_agent:navigator.userAgent,
       created_at:new Date().toISOString()
     },{onConflict:'endpoint'});
-    console.log('[MMS-Tech] Push subscription saved');
-  }catch(e){console.error('[MMS-Tech] Push subscribe failed',e)}
+    if(saveResult.error){console.error('[MMS-Tech] Step 5 FAILED:',saveResult.error);if(statusEl){statusEl.textContent='DB save failed: '+saveResult.error.message;statusEl.style.background='#DC2626';statusEl.style.display=''}return}
+    console.log('[MMS-Tech] Step 5 OK: Push subscription saved');
+    if(statusEl){statusEl.style.display='none'}
+    toast('Notifications enabled!');
+  }catch(e){console.error('[MMS-Tech] Push subscribe failed at step:',e);if(statusEl){statusEl.textContent='Error: '+e.message;statusEl.style.background='#DC2626';statusEl.style.display=''}}
 }
 
 async function unsubscribePush(){
