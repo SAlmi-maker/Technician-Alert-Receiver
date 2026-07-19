@@ -166,7 +166,7 @@ body{min-height:100vh;display:flex;flex-direction:column}
 'use strict';
 
 var SUPABASE_URL='https://tnmiqirhcmrletclftjo.supabase.co';
-var SUPABASE_KEY='sb_publishable_coXguYk8H6l3ibmLpXybug_GNNXxR-C';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubWlxaXJoY21ybGV0Y2xmdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTkyMDIsImV4cCI6MjA5NjQ5NTIwMn0.4yerG6tvGT_8BeoRzCmzeZrae1BlFNpjB6LHpc7gdQA';
 var sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 var alertHistory=[];
@@ -226,8 +226,7 @@ async function initSupabase(){
         alertHistory.unshift(alert);
         renderHistory();
 
-        var isNew=(Date.now()-new Date(alert.time).getTime())<30000;
-        if(isNew&&(Date.now()-lastPopupDismiss)>3000){
+        if((Date.now()-lastPopupDismiss)>3000){
           showPopup(alert);
           if(soundOn)playAlertSound();
           if(Notification&&Notification.permission==='granted'){
