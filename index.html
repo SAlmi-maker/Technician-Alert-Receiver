@@ -3,159 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fujikura - Maintenance Alerts</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50" r="46" fill="%23DC2626"/%3E%3Ctext x="50" y="64" text-anchor="middle" fill="white" font-size="36" font-family="Arial" font-weight="bold"%3E!%3C/text%3E%3C/svg%3E">
+<title>Fujikura - Technician Portal</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50" cy="50" r="46" fill="%23003D7C"/%3E%3Ctext x="50" y="64" text-anchor="middle" fill="white" font-size="36" font-family="Arial" font-weight="bold"%3EF%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
---red:#DC2626;--red-bg:#FEF2F2;--red-dark:#991B1B;
---yellow:#D97706;--yellow-bg:#FFFBEB;
---green:#16A34A;--green-bg:#F0FDF4;
---navy:#003D7C;--bg:#0F172A;--surface:#1E293B;--surface2:#334155;
---text:#F8FAFC;--text-sec:#94A3B8;--border:#475569;
---radius:12px;
+  --navy:#003D7C;--navy-light:#0057B8;
+  --accent:#0BBBEF;--accent-dim:rgba(11,187,239,.1);
+  --red:#DC2626;--red-bg:rgba(220,38,38,.08);--red-dark:#991B1B;
+  --yellow:#D97706;--yellow-bg:rgba(217,119,6,.08);
+  --green:#16A34A;--green-bg:rgba(22,163,74,.08);--green-dark:#15803d;
+  --bg:#F1F5F9;--surface:#FFFFFF;--surface-alt:#F8FAFC;
+  --text:#0F172A;--text-sec:#475569;--text-muted:#94A3B8;
+  --border:#E2E8F0;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.04);
 }
-html{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
-body{min-height:100vh;display:flex;flex-direction:column}
+html{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+body{min-height:100vh}
+
+/* ── LOGIN SCREEN ── */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--navy) 0%,#002B5C 100%);padding:20px}
+.login-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:0 24px 80px rgba(0,0,0,.3);width:400px;max-width:94vw;padding:40px 36px;text-align:center}
+.login-card svg{width:56px;height:56px;margin-bottom:16px}
+.login-card h1{font-size:1.3rem;font-weight:800;color:var(--navy);margin-bottom:4px}
+.login-card p{font-size:.82rem;color:var(--text-muted);margin-bottom:24px}
+.login-card label{display:block;text-align:left;font-size:.72rem;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px}
+.login-card input{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:.95rem;font-family:inherit;color:var(--text);transition:border .15s;margin-bottom:16px}
+.login-card input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.login-btn{width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.login-btn:hover{background:var(--navy-light);box-shadow:var(--shadow-md)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-error{color:var(--red);font-size:.8rem;margin-bottom:12px;display:none}
 
 /* ── HEADER ── */
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-left svg{width:36px;height:36px}
-.header-left h1{font-size:1.1rem;font-weight:800}
-.header-left small{display:block;font-size:.68rem;color:var(--text-sec);font-weight:400}
-.conn-status{display:flex;align-items:center;gap:6px;font-size:.75rem;padding:6px 14px;border-radius:20px;background:var(--surface2)}
-.conn-dot{width:8px;height:8px;border-radius:50%;transition:background .3s}
-.conn-dot.on{background:var(--green);box-shadow:0 0 8px rgba(22,163,74,.5)}
+.header-left svg{width:32px;height:32px}
+.header-left h1{font-size:1rem;font-weight:800;color:var(--navy)}
+.header-left small{display:block;font-size:.65rem;color:var(--text-muted);font-weight:400}
+.header-right{display:flex;align-items:center;gap:12px}
+.tech-badge{display:flex;align-items:center;gap:8px;background:var(--accent-dim);padding:6px 14px;border-radius:20px;font-size:.82rem;font-weight:600;color:var(--navy)}
+.tech-badge .avatar{width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800}
+.conn-pill{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--text-muted);padding:4px 10px;border-radius:20px;background:var(--bg)}
+.conn-dot{width:6px;height:6px;border-radius:50%}
+.conn-dot.on{background:var(--green);box-shadow:0 0 6px rgba(22,163,74,.5)}
 .conn-dot.off{background:var(--red)}
+.btn-logout{padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text-sec);font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-logout:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
 
-/* ── ALERT POPUP ── */
-.popup-overlay{display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
-.popup-overlay.show{display:flex}
-.popup{background:var(--surface);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.5);width:440px;max-width:94vw;overflow:hidden;animation:popIn .35s cubic-bezier(.34,1.56,.64,1)}
-.popup-urgency-bar{height:6px}
-.popup-urgency-bar.high{background:var(--red)}
-.popup-urgency-bar.medium{background:var(--yellow)}
-.popup-urgency-bar.low{background:var(--green)}
-.popup-body{padding:28px 24px;text-align:center}
-.popup-icon{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center}
-.popup-icon.high{background:var(--red-bg);color:var(--red)}
-.popup-icon.medium{background:var(--yellow-bg);color:var(--yellow)}
-.popup-icon.low{background:var(--green-bg);color:var(--green)}
-.popup-icon svg{width:32px;height:32px}
-.popup-title{font-size:1.3rem;font-weight:900;margin-bottom:4px}
-.popup-subtitle{font-size:.82rem;color:var(--text-sec);margin-bottom:18px}
-.popup-detail{background:var(--surface2);border-radius:var(--radius);padding:14px 16px;text-align:left;margin-bottom:18px;font-size:.85rem}
-.popup-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-.popup-row:last-child{border-bottom:none}
-.popup-row .lbl{color:var(--text-sec);font-weight:500}
-.popup-row .val{font-weight:700;text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.urg-badge{display:inline-block;padding:2px 10px;border-radius:6px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.03em}
+/* ── MAIN ── */
+.main{padding:20px 24px;max-width:900px;margin:0 auto}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.tab{flex:1;padding:12px 16px;text-align:center;font-size:.85rem;font-weight:700;cursor:pointer;color:var(--text-muted);transition:all .15s;border-bottom:3px solid transparent}
+.tab:hover{color:var(--text);background:var(--surface-alt)}
+.tab.active{color:var(--navy);border-bottom-color:var(--navy);background:var(--surface)}
+.tab .badge{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:10px;font-size:.68rem;font-weight:800;color:#fff;min-width:18px;text-align:center}
+.tab .badge.red{background:var(--red)}
+.tab .badge.yellow{background:var(--yellow)}
+.tab .badge.green{background:var(--green)}
+
+/* ── STAT ROW ── */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card:nth-child(1)::before{background:var(--red)}
+.stat-card:nth-child(2)::before{background:var(--yellow)}
+.stat-card:nth-child(3)::before{background:var(--green)}
+.stat-val{font-size:1.6rem;font-weight:800;line-height:1}
+.stat-lbl{font-size:.68rem;color:var(--text-muted);text-transform:uppercase;margin-top:3px;font-weight:600}
+
+/* ── ALERT CARDS ── */
+.alert-list{display:flex;flex-direction:column;gap:10px}
+.alert-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;border-left:5px solid;box-shadow:var(--shadow);transition:all .15s}
+.alert-card:hover{box-shadow:var(--shadow-md)}
+.alert-card.high{border-left-color:var(--red)}
+.alert-card.medium{border-left-color:var(--yellow)}
+.alert-card.low{border-left-color:var(--green)}
+.alert-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.alert-card-machine{font-size:1.05rem;font-weight:800}
+.urg-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.03em}
 .urg-badge.high{background:var(--red);color:#fff}
 .urg-badge.medium{background:var(--yellow);color:#fff}
 .urg-badge.low{background:var(--green);color:#fff}
-.popup-dismiss{width:100%;padding:14px;background:var(--surface2);border:none;color:var(--text);font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
-.popup-dismiss:hover{background:var(--border)}
+.alert-card-zone{font-size:.78rem;color:var(--text-muted);margin-bottom:4px}
+.alert-card-desc{font-size:.88rem;color:var(--text-sec);margin-bottom:10px;line-height:1.4}
+.alert-card-meta{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-muted);flex-wrap:wrap;margin-bottom:12px}
+.alert-card-meta .sep{color:var(--border)}
+.alert-card-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:9px 18px;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.btn-accept{background:var(--green);color:#fff}
+.btn-accept:hover{background:var(--green-dark)}
+.btn-resolve{background:var(--navy);color:#fff}
+.btn-resolve:hover{background:var(--navy-light)}
+.btn-whatsapp{background:#25D366;color:#fff}
+.btn-whatsapp:hover{background:#1fb84e}
+.claimed-info{font-size:.82rem;font-weight:600;color:var(--yellow);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.resolved-info{font-size:.82rem;font-weight:600;color:var(--green);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.new-flash{animation:flashIn .6s ease}
+@keyframes flashIn{0%{background:rgba(11,187,239,.12)}100%{background:var(--surface)}}
 
-@keyframes popIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+.empty{padding:60px 20px;text-align:center;color:var(--text-muted)}
+.empty svg{width:52px;height:52px;margin-bottom:14px;opacity:.25}
+.empty p{font-size:.9rem;margin-top:4px}
+
+/* ── SECTION VISIBILITY ── */
+.section{display:none}.section.active{display:block}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:var(--radius);font-size:.82rem;font-weight:600;box-shadow:var(--shadow-lg);z-index:9999;animation:toastIn .3s ease,toastOut .3s ease 2.2s forwards}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(10px)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .pulsing{animation:pulse 1.5s ease infinite}
-
-/* ── MAIN ── */
-.main{flex:1;padding:24px;max-width:800px;margin:0 auto;width:100%}
-
-/* ── SETTINGS ── */
-.settings{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
-.settings h3{font-size:.82rem;font-weight:700;margin-bottom:10px;color:var(--text-sec);text-transform:uppercase;letter-spacing:.03em}
-.settings-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
-.settings-row label{font-size:.72rem;font-weight:600;color:var(--text-sec);display:block;margin-bottom:3px}
-.settings-row input,.settings-row select{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:.85rem;font-family:inherit;width:180px}
-.settings-row input:focus{outline:none;border-color:var(--red)}
-.btn{padding:9px 18px;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
-.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-dark)}
-.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#15803d}
-.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--border)}
-.sound-toggle{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-sec);cursor:pointer;user-select:none}
-.sound-toggle input{accent-color:var(--red);width:16px;height:16px}
-
-/* ── HISTORY ── */
-.history-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.history-header h2{font-size:.95rem;font-weight:800}
-.history-count{font-size:.75rem;color:var(--text-sec);background:var(--surface);padding:4px 12px;border-radius:20px}
-.alert-history{display:flex;flex-direction:column;gap:8px}
-.alert-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;border-left:4px solid;transition:transform .15s}
-.alert-item:hover{transform:translateX(4px)}
-.alert-item.high{border-left-color:var(--red)}
-.alert-item.medium{border-left-color:var(--yellow)}
-.alert-item.low{border-left-color:var(--green)}
-.alert-item-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.alert-item-machine{font-weight:800;font-size:.95rem}
-.alert-item-desc{font-size:.82rem;color:var(--text-sec);margin:4px 0}
-.alert-item-meta{display:flex;align-items:center;gap:8px;font-size:.7rem;color:var(--text-sec);flex-wrap:wrap}
-.alert-item-meta .sep{color:var(--border)}
-.alert-new{animation:flashIn .6s ease}
-@keyframes flashIn{0%{background:rgba(220,38,38,.15)}100%{background:var(--surface)}}
-
-.empty{padding:60px 20px;text-align:center;color:var(--text-sec)}
-.empty svg{width:48px;height:48px;margin-bottom:12px;opacity:.3}
-.empty p{font-size:.9rem}
-
-/* ── LIVE INDICATOR ── */
-.live-dot{width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;margin-right:6px}
-.live-dot.pulsing{animation:pulse 1.5s ease infinite}
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-left">
-    <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#DC2626"/><text x="50" y="64" text-anchor="middle" fill="#fff" font-size="40" font-family="Arial" font-weight="bold">!</text></svg>
-    <div><h1>Alert Notifications</h1><small>Technician Alert Receiver</small></div>
-  </div>
-  <div class="conn-status">
-    <span class="conn-dot" id="connDot"></span>
-    <span id="connLabel">Connecting...</span>
-  </div>
-</header>
-
-<div class="main">
-  <div class="settings">
-    <h3>Settings</h3>
-    <div class="settings-row">
-      <div><label>Your Name</label><input type="text" id="techName" placeholder="e.g. Ahmed" oninput="saveSettings()"></div>
-      <div><label>Filter by Machine</label><input type="text" id="filterMachine" placeholder="All machines" oninput="saveSettings()"></div>
-      <label class="sound-toggle"><input type="checkbox" id="soundOn" checked onchange="saveSettings()"> Sound Alert</label>
-      <button class="btn btn-secondary" onclick="clearHistory()">Clear History</button>
-      <button class="btn btn-red" onclick="testNotification()" style="margin-left:auto">Test Alert</button>
-    </div>
-  </div>
-
-  <div class="history-header">
-    <h2><span class="live-dot pulsing"></span> Live Alert Feed</h2>
-    <span class="history-count" id="historyCount">0 alerts</span>
-  </div>
-  <div class="alert-history" id="alertHistory">
-    <div class="empty" id="emptyState">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <p>Waiting for alerts...</p>
-      <p style="font-size:.75rem;margin-top:6px;opacity:.5">Alerts submitted from the main app will appear here instantly</p>
-    </div>
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#003D7C"/><text x="50" y="64" text-anchor="middle" fill="#fff" font-size="40" font-family="Arial" font-weight="bold">F</text></svg>
+    <h1>Technician Portal</h1>
+    <p>Enter your name to start receiving and accepting alerts</p>
+    <div class="login-error" id="loginError">Please enter your name</div>
+    <label>Your Name</label>
+    <input type="text" id="loginName" placeholder="e.g. Ahmed, Mohammed, Youssef..." autofocus>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Enter Portal</button>
   </div>
 </div>
 
-<!-- POPUP -->
-<div class="popup-overlay" id="popupOverlay">
-  <div class="popup">
-    <div class="popup-urgency-bar" id="popupBar"></div>
-    <div class="popup-body">
-      <div class="popup-icon" id="popupIcon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      </div>
-      <div class="popup-title" id="popupTitle">NEW ALERT</div>
-      <div class="popup-subtitle" id="popupSubtitle">A new maintenance problem has been reported</div>
-      <div class="popup-detail" id="popupDetail"></div>
-      <button class="popup-dismiss" onclick="dismissPopup()">DISMISS</button>
+<!-- ═══ MAIN APP (hidden until login) ═══ -->
+<div id="appMain" style="display:none">
+  <header class="header">
+    <div class="header-left">
+      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#003D7C"/><text x="50" y="64" text-anchor="middle" fill="#fff" font-size="40" font-family="Arial" font-weight="bold">F</text></svg>
+      <div><h1>Technician Portal</h1><small>Maintenance Alert Receiver</small></div>
+    </div>
+    <div class="header-right">
+      <div class="conn-pill"><span class="conn-dot" id="connDot"></span><span id="connLabel">Connecting...</span></div>
+      <div class="tech-badge"><div class="avatar" id="techAvatar"></div><span id="techDisplayName"></span></div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="stat-row" id="statRow"></div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('open')" id="tabOpen">Open Alerts <span class="badge red" id="openCount">0</span></div>
+      <div class="tab" onclick="switchTab('mine')" id="tabMine">My Active <span class="badge yellow" id="mineCount">0</span></div>
+      <div class="tab" onclick="switchTab('resolved')" id="tabResolved">Resolved Today <span class="badge green" id="resolvedCount">0</span></div>
+    </div>
+
+    <div class="section active" id="sec-open">
+      <div class="alert-list" id="openList"></div>
+    </div>
+    <div class="section" id="sec-mine">
+      <div class="alert-list" id="mineList"></div>
+    </div>
+    <div class="section" id="sec-resolved">
+      <div class="alert-list" id="resolvedList"></div>
     </div>
   </div>
 </div>
@@ -169,91 +183,213 @@ var SUPABASE_URL='https://tnmiqirhcmrletclftjo.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubWlxaXJoY21ybGV0Y2xmdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTkyMDIsImV4cCI6MjA5NjQ5NTIwMn0.4yerG6tvGT_8BeoRzCmzeZrae1BlFNpjB6LHpc7gdQA';
 var sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-var alertHistory=[];
+var techName='';
+var alerts=[];
 var knownIds={};
-var soundOn=true,filterMach='';
-var lastPopupDismiss=0;
+var currentTab='open';
+var lastNotifTime=0;
 
-// ── Load settings ──
-function loadSettings(){
-  try{
-    var s=JSON.parse(localStorage.getItem('notif_settings')||'{}');
-    if(s.name)document.getElementById('techName').value=s.name;
-    if(s.filterMachine)document.getElementById('filterMachine').value=s.filterMachine;
-    if(s.soundOn!==undefined){soundOn=s.soundOn;document.getElementById('soundOn').checked=s.soundOn}
-    filterMach=s.filterMachine||'';
-  }catch(e){}
-}
-function saveSettings(){
-  soundOn=document.getElementById('soundOn').checked;
-  filterMach=document.getElementById('filterMachine').value.trim().toLowerCase();
-  localStorage.setItem('notif_settings',JSON.stringify({
-    name:document.getElementById('techName').value,
-    filterMachine:document.getElementById('filterMachine').value,
-    soundOn:soundOn
-  }));
-}
+// ══ LOGIN ══
+window.doLogin=function(){
+  var name=document.getElementById('loginName').value.trim();
+  if(!name){document.getElementById('loginError').style.display='';return}
+  document.getElementById('loginError').style.display='none';
+  techName=name;
+  localStorage.setItem('tech_name',name);
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appMain').style.display='';
+  document.getElementById('techDisplayName').textContent=name;
+  document.getElementById('techAvatar').textContent=name.charAt(0).toUpperCase();
+  initSupabase();
+};
 
-// ── Supabase ──
-var connected=false;
+window.doLogout=function(){
+  techName='';
+  localStorage.removeItem('tech_name');
+  document.getElementById('loginScreen').style.display='';
+  document.getElementById('appMain').style.display='none';
+  document.getElementById('loginName').value='';
+};
 
+// Enter key on login
+document.getElementById('loginName').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
+
+// Auto-login if name saved
+(function(){
+  var saved=localStorage.getItem('tech_name');
+  if(saved){document.getElementById('loginName').value=saved;doLogin()}
+})();
+
+// ══ SUPABASE ══
 async function initSupabase(){
   try{
     var r=await sb.from('alerts').select('id').limit(1);
     if(r.error)throw r.error;
-    connected=true;
     document.getElementById('connDot').className='conn-dot on';
     document.getElementById('connLabel').textContent='Connected';
 
-    // Load recent alerts
-    var hist=await sb.from('alerts').select('*').order('time',{ascending:false}).limit(100);
+    // Load all alerts
+    var hist=await sb.from('alerts').select('*').order('time',{ascending:false}).limit(200);
     if(!hist.error&&hist.data){
-      hist.data.forEach(function(a){
-        knownIds[a.id]=true;
-        alertHistory.push(a);
-      });
-      renderHistory();
+      hist.data.forEach(function(a){knownIds[a.id]=true});
+      alerts=hist.data;
+      renderAll();
     }
 
-    // Subscribe to new alerts
-    sb.channel('alert-notifications')
+    // Real-time: new alerts
+    sb.channel('tech-alerts')
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'alerts'},function(p){
-        var alert=p.new;
-        if(!alert||!alert.id||knownIds[alert.id])return;
-        knownIds[alert.id]=true;
-        if(filterMach&&alert.machine&&alert.machine.toLowerCase().indexOf(filterMach)===-1)return;
-
-        alertHistory.unshift(alert);
-        renderHistory();
-
-        if((Date.now()-lastPopupDismiss)>3000){
-          showPopup(alert);
-          if(soundOn)playAlertSound();
+        var a=p.new;
+        if(!a||!a.id||knownIds[a.id])return;
+        knownIds[a.id]=true;
+        alerts.unshift(a);
+        renderAll();
+        // Notification
+        if((Date.now()-lastNotifTime)>3000){
+          lastNotifTime=Date.now();
+          if(soundOn)playSound();
           if(Notification&&Notification.permission==='granted'){
-            new Notification('MMS Alert - '+alert.machine,{body:alert.desc+'\nUrgency: '+alert.urgency});
+            new Notification('New Alert - '+a.machine,{body:a.desc+'\nUrgency: '+a.urgency,tag:'alert-'+a.id});
           }
+          toast('New alert: '+a.machine+' - '+a.desc);
         }
       })
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'alerts'},function(p){
-        var alert=p.new;
-        var idx=alertHistory.findIndex(function(a){return a.id===alert.id});
-        if(idx>=0)alertHistory[idx]=alert;
-        renderHistory();
+        var a=p.new;
+        var idx=alerts.findIndex(function(x){return x.id===a.id});
+        if(idx>=0)alerts[idx]=a;else alerts.unshift(a);
+        renderAll();
       })
       .subscribe();
 
+    // Request notification permission
+    if(Notification&&Notification.permission==='default')Notification.requestPermission();
+
   }catch(e){
-    console.error('Supabase connection failed',e);
-    document.getElementById('connLabel').textContent='Connection Failed';
+    console.error('Supabase failed',e);
+    document.getElementById('connLabel').textContent='Offline';
     document.getElementById('connDot').className='conn-dot off';
   }
 }
 
-// ── Notification permission ──
-if(Notification&&Notification.permission==='default'){Notification.requestPermission()}
+// ══ CLAIM / RESOLVE ══
+window.claimAlert=function(id){
+  var a=alerts.find(function(x){return x.id===id});
+  if(!a)return;
+  a.status='in-progress';
+  a.claimed_by=techName;
+  a.claim_time=new Date().toISOString();
+  sb.from('alerts').upsert(a,{onConflict:'id'}).then(function(r){
+    if(r.error)console.error('Claim failed',r.error);
+    else toast('You claimed: '+a.machine);
+    renderAll();
+  });
+};
 
-// ── Sound ──
-function playAlertSound(){
+window.resolveAlert=function(id){
+  var a=alerts.find(function(x){return x.id===id});
+  if(!a)return;
+  a.status='resolved';
+  a.resolved_time=new Date().toISOString();
+  sb.from('alerts').upsert(a,{onConflict:'id'}).then(function(r){
+    if(r.error)console.error('Resolve failed',r.error);
+    else toast('Resolved: '+a.machine);
+    renderAll();
+  });
+};
+
+window.shareWhatsApp=function(id){
+  var a=alerts.find(function(x){return x.id===id});
+  if(!a)return;
+  window.open('https://wa.me/?text='+encodeURIComponent('MAINTENANCE ALERT\nMachine: '+a.machine+'\nZone: '+a.zone+'\nProblem: '+a.desc+'\nUrgency: '+a.urgency+'\nReported by: '+a.reporter+'\nTime: '+fmtTime(a.time)),'_blank');
+};
+
+// ══ TABS ══
+window.switchTab=function(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active')});
+  document.getElementById('sec-'+tab).classList.add('active');
+};
+
+// ══ RENDER ══
+function renderAll(){
+  var today=todayKey(new Date().toISOString());
+  var open=[],mine=[],resolved=[];
+
+  alerts.forEach(function(a){
+    if(a.status==='open')open.push(a);
+    else if(a.status==='in-progress'&&a.claimed_by===techName)mine.push(a);
+    else if(a.status==='resolved'&&todayKey(a.resolved_time||a.time)===today)resolved.push(a);
+  });
+
+  // Sort: high urgency first, then newest
+  var urgOrder={'High-Urgent':0,'Medium':1,'Low':2};
+  var sf=function(a,b){return(urgOrder[a.urgency]||9)-(urgOrder[b.urgency]||9)||new Date(b.time)-new Date(a.time)};
+  open.sort(sf);mine.sort(sf);resolved.sort(sf);
+
+  // Stats
+  var openCount=alerts.filter(function(a){return a.status==='open'}).length;
+  var mineCount=alerts.filter(function(a){return a.status==='in-progress'&&a.claimed_by===techName}).length;
+  var resolvedToday=alerts.filter(function(a){return a.status==='resolved'&&todayKey(a.resolved_time||a.time)===today}).length;
+
+  document.getElementById('openCount').textContent=openCount;
+  document.getElementById('mineCount').textContent=mineCount;
+  document.getElementById('resolvedCount').textContent=resolvedToday;
+
+  document.getElementById('statRow').innerHTML=
+    '<div class="stat-card"><div class="stat-val" style="color:var(--red)">'+openCount+'</div><div class="stat-lbl">Open Alerts</div></div>'
+    +'<div class="stat-card"><div class="stat-val" style="color:var(--yellow)">'+mineCount+'</div><div class="stat-lbl">My Active Tasks</div></div>'
+    +'<div class="stat-card"><div class="stat-val" style="color:var(--green)">'+resolvedToday+'</div><div class="stat-lbl">Resolved Today</div></div>';
+
+  document.getElementById('openList').innerHTML=open.length?open.map(renderOpenCard).join(''):'<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><p>No open alerts</p><p style="font-size:.78rem;opacity:.6">All clear! New alerts will appear here instantly.</p></div>';
+
+  document.getElementById('mineList').innerHTML=mine.length?mine.map(renderMineCard).join(''):'<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><p>No active tasks</p><p style="font-size:.78rem;opacity:.6">Accept an open alert to start working on it.</p></div>';
+
+  document.getElementById('resolvedList').innerHTML=resolved.length?resolved.map(renderResolvedCard).join(''):'<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg><p>Nothing resolved today yet</p></div>';
+}
+
+function renderOpenCard(a){
+  var uc=a.urgency==='High-Urgent'?'high':a.urgency==='Medium'?'medium':'low';
+  return '<div class="alert-card '+uc+'">'
+    +'<div class="alert-card-top"><span class="alert-card-machine">'+esc(a.machine)+'</span><span class="urg-badge '+uc+'">'+esc(a.urgency)+'</span></div>'
+    +'<div class="alert-card-zone">'+esc(a.zone||'No zone specified')+'</div>'
+    +'<div class="alert-card-desc">'+esc(a.desc)+'</div>'
+    +'<div class="alert-card-meta"><span>Reported by <strong>'+esc(a.reporter||'Unknown')+'</strong></span><span class="sep">&middot;</span><span>'+timeAgo(a.time)+'</span></div>'
+    +'<div class="alert-card-actions">'
+    +'<button class="btn btn-accept" onclick="claimAlert(\''+a.id+'\')">&#10003; Accept Alert</button>'
+    +'<button class="btn btn-whatsapp" onclick="shareWhatsApp(\''+a.id+'\')">WhatsApp</button>'
+    +'</div></div>';
+}
+
+function renderMineCard(a){
+  var uc=a.urgency==='High-Urgent'?'high':a.urgency==='Medium'?'medium':'low';
+  var elapsed=a.claim_time?timeAgo(a.claim_time):'';
+  return '<div class="alert-card '+uc+'">'
+    +'<div class="alert-card-top"><span class="alert-card-machine">'+esc(a.machine)+'</span><span class="urg-badge '+uc+'">'+esc(a.urgency)+'</span></div>'
+    +'<div class="alert-card-zone">'+esc(a.zone||'No zone specified')+'</div>'
+    +'<div class="alert-card-desc">'+esc(a.desc)+'</div>'
+    +'<div class="claimed-info">Accepted '+elapsed+' &mdash; Working on it</div>'
+    +'<div class="alert-card-meta"><span>Reported by <strong>'+esc(a.reporter||'Unknown')+'</strong></span><span class="sep">&middot;</span><span>'+timeAgo(a.time)+'</span></div>'
+    +'<div class="alert-card-actions">'
+    +'<button class="btn btn-resolve" onclick="resolveAlert(\''+a.id+'\')">&#10003; Mark Resolved</button>'
+    +'<button class="btn btn-whatsapp" onclick="shareWhatsApp(\''+a.id+'\')">WhatsApp</button>'
+    +'</div></div>';
+}
+
+function renderResolvedCard(a){
+  var uc=a.urgency==='High-Urgent'?'high':a.urgency==='Medium'?'medium':'low';
+  return '<div class="alert-card '+uc+'" style="opacity:.7">'
+    +'<div class="alert-card-top"><span class="alert-card-machine">'+esc(a.machine)+'</span><span class="urg-badge '+uc+'">'+esc(a.urgency)+'</span></div>'
+    +'<div class="alert-card-desc">'+esc(a.desc)+'</div>'
+    +'<div class="resolved-info">Resolved by '+esc(a.claimed_by||'?')+' &mdash; '+timeAgo(a.resolved_time||a.time)+'</div>'
+    +'</div>';
+}
+
+// ══ SOUND ══
+var soundOn=true;
+function playSound(){
   try{
     var ctx=new(window.AudioContext||window.webkitAudioContext)();
     [0,.18,.36].forEach(function(delay){
@@ -275,61 +411,14 @@ function playAlertSound(){
   }catch(e){}
 }
 
-// ── Popup ──
-function showPopup(alert){
-  var uc=alert.urgency==='High-Urgent'?'high':alert.urgency==='Medium'?'medium':'low';
-  document.getElementById('popupBar').className='popup-urgency-bar '+uc;
-  document.getElementById('popupIcon').className='popup-icon '+uc;
-  document.getElementById('popupTitle').textContent=alert.machine;
-  document.getElementById('popupSubtitle').textContent=uc==='high'?'URGENT - Immediate attention required':'New problem reported';
-  document.getElementById('popupDetail').innerHTML=
-    '<div class="popup-row"><span class="lbl">Machine</span><span class="val">'+esc(alert.machine)+'</span></div>'
-    +'<div class="popup-row"><span class="lbl">Zone</span><span class="val">'+esc(alert.zone||'—')+'</span></div>'
-    +'<div class="popup-row"><span class="lbl">Problem</span><span class="val">'+esc(alert.desc)+'</span></div>'
-    +'<div class="popup-row"><span class="lbl">Urgency</span><span class="val"><span class="urg-badge '+uc+'">'+alert.urgency+'</span></span></div>'
-    +'<div class="popup-row"><span class="lbl">Reported by</span><span class="val">'+esc(alert.reporter||'Unknown')+'</span></div>'
-    +'<div class="popup-row"><span class="lbl">Time</span><span class="val">'+fmtTime(alert.time)+'</span></div>';
-  document.getElementById('popupOverlay').classList.add('show');
-  if(uc!=='high')setTimeout(function(){dismissPopup()},8000);
-}
-window.dismissPopup=function(){document.getElementById('popupOverlay').classList.remove('show');lastPopupDismiss=Date.now()};
+// ══ TOAST ══
+function toast(msg){var el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);setTimeout(function(){el.remove()},2600)}
 
-// ── Render history ──
-function renderHistory(){
-  var el=document.getElementById('alertHistory');
-  var count=document.getElementById('historyCount');
-  var empty=document.getElementById('emptyState');
-  if(!alertHistory.length){el.innerHTML='';el.appendChild(empty);empty.style.display='';count.textContent='0 alerts';return}
-  empty.style.display='none';
-  count.textContent=alertHistory.length+' alert'+(alertHistory.length===1?'':'s');
-  el.innerHTML=alertHistory.map(function(a,i){
-    var uc=a.urgency==='High-Urgent'?'high':a.urgency==='Medium'?'medium':'low';
-    var sl='';
-    if(a.status==='in-progress')sl='<span style="color:var(--yellow);font-weight:700">Claimed by '+esc(a.claimed_by)+'</span><span class="sep">&middot;</span>';
-    if(a.status==='resolved')sl='<span style="color:var(--green);font-weight:700">Resolved</span><span class="sep">&middot;</span>';
-    var isNew=i===0&&(Date.now()-new Date(a.time).getTime())<60000;
-    return '<div class="alert-item '+uc+(isNew?' alert-new':'')+'">'
-      +'<div class="alert-item-top"><span class="alert-item-machine">'+esc(a.machine)+'</span><span class="urg-badge '+uc+'">'+esc(a.urgency)+'</span></div>'
-      +'<div class="alert-item-desc">'+esc(a.desc)+'</div>'
-      +'<div class="alert-item-meta">'+sl+esc(a.zone||'')+'<span class="sep">&middot;</span>'+esc(a.reporter||'Unknown')+'<span class="sep">&middot;</span>'+timeAgo(a.time)+'<span class="sep">&middot;</span>'+a.status+'</div>'
-      +'</div>';
-  }).join('');
-}
-
-// ── Test ──
-window.testNotification=function(){
-  showPopup({id:'test',machine:'TEST MACHINE',zone:'Zone 99',desc:'This is a test alert notification',urgency:'High-Urgent',reporter:'System',time:new Date().toISOString(),status:'open'});
-  if(soundOn)playAlertSound();
-};
-window.clearHistory=function(){if(!confirm('Clear all alert history?'))return;alertHistory=[];knownIds={};renderHistory()};
-
-// ── Helpers ──
+// ══ HELPERS ══
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function fmtTime(iso){if(!iso)return'';var d=new Date(iso);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
 function timeAgo(iso){var diff=(Date.now()-new Date(iso).getTime())/1000;if(diff<60)return Math.floor(diff)+'s ago';if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';return Math.floor(diff/86400)+'d ago'}
-
-// ── Init ──
-loadSettings();renderHistory();initSupabase();
+function todayKey(iso){var d=new Date(iso);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 
 })();
 </script>
