@@ -54,10 +54,37 @@ body{min-height:100vh;padding:16px;max-width:520px;margin:0 auto}
 </head>
 <body>
 
-<div class="header">
-  <h1>Log a Machine Failure</h1>
-  <p>Fill in what you just fixed</p>
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="display:none">
+  <div class="header">
+    <h1>Log a Machine Failure</h1>
+    <p>Sign in with your account</p>
+  </div>
+  <div class="card">
+    <h2>Sign In</h2>
+    <div id="loginError" style="display:none;color:var(--red);font-size:.78rem;margin-bottom:10px"></div>
+    <div class="field">
+      <label>Badge Number *</label>
+      <input type="text" id="loginBadge" placeholder="e.g. 1024">
+    </div>
+    <div class="field">
+      <label>Full Name *</label>
+      <input type="text" id="loginName" placeholder="e.g. Ahmed Mohamed">
+    </div>
+    <button class="btn-submit" onclick="doLogin()">Sign In</button>
+    <p style="text-align:center;margin-top:12px;font-size:.72rem;color:var(--text-muted)">First time? Just enter your info and sign in — your account is saved on this device.</p>
+  </div>
 </div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+  <div class="header">
+    <h1>Log a Machine Failure</h1>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+      <span id="userBadge" style="font-size:.72rem;color:rgba(255,255,255,.6)"></span>
+      <a href="#" onclick="doLogout();return false" style="color:rgba(255,255,255,.5);font-size:.72rem;text-decoration:underline;cursor:pointer">Logout</a>
+    </div>
+  </div>
 
 <div class="success-msg" id="successMsg">
   <h3>Failure logged!</h3>
@@ -79,8 +106,8 @@ body{min-height:100vh;padding:16px;max-width:520px;margin:0 auto}
         <input type="text" id="fZone" placeholder="e.g. Line A">
       </div>
       <div class="field">
-        <label>Your Name *</label>
-        <input type="text" id="fTech" placeholder="Technician name" required>
+        <label>Your Name</label>
+        <input type="text" id="fTech" readonly style="background:var(--bg);color:var(--text-sec)">
       </div>
     </div>
 
@@ -164,6 +191,31 @@ var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var sb=supabase.createClient(SB_URL,SB_KEY);
 
 var sev='Total Failure',prodWorks=false,maintType='Corrective';
+var profile=JSON.parse(localStorage.getItem('ft_profile')||'null');
+
+function showLogin(){document.getElementById('loginScreen').style.display='';document.getElementById('mainApp').style.display='none'}
+function showMain(){document.getElementById('loginScreen').style.display='none';document.getElementById('mainApp').style.display='';document.getElementById('userBadge').textContent='Badge: '+profile.badge;document.getElementById('fTech').value=profile.name}
+if(!profile){showLogin()}else{showMain();loadRecent()}
+
+window.doLogin=function(){
+  var b=document.getElementById('loginBadge').value.trim();
+  var n=document.getElementById('loginName').value.trim();
+  var err=document.getElementById('loginError');
+  if(!b||!n){err.textContent='Please enter both fields.';err.style.display='';return}
+  err.style.display='none';
+  profile={name:n,badge:b};
+  localStorage.setItem('ft_profile',JSON.stringify(profile));
+  showMain();
+  loadRecent();
+  toast('Signed in as '+n);
+};
+
+window.doLogout=function(){
+  if(!confirm('Sign out?'))return;
+  profile=null;
+  localStorage.removeItem('ft_profile');
+  showLogin();
+};
 
 window.setSev=function(v){sev=v;['sevTotal','sevPartial','sevNone'].forEach(function(id){document.getElementById(id).className=''});var map={'Total Failure':'sevTotal','Partial':'sevPartial','No Impact':'sevNone'};document.getElementById(map[v]).className='active-no'};
 window.setProd=function(v){prodWorks=v;document.getElementById('prodYes').className=v?'active-yes':'';document.getElementById('prodNo').className=!v?'active-no':''};
@@ -177,9 +229,9 @@ function toast(msg){var el=document.createElement('div');el.className='toast';el
 window.submitForm=function(e){
   e.preventDefault();
   var machine=document.getElementById('fMachine').value.trim();
-  var tech=document.getElementById('fTech').value.trim();
+  var tech=profile?profile.name:'';
   var type=document.getElementById('fType').value;
-  if(!machine||!tech||!type)return;
+  if(!machine||!type)return;
   var rec={
     id:genId(),
     machine:machine,
@@ -192,6 +244,7 @@ window.submitForm=function(e){
     repair_time:parseInt(document.getElementById('fRepair').value)||0,
     parts:document.getElementById('fParts').value.trim(),
     technician:tech,
+    badge:profile?profile.badge:'',
     notes:document.getElementById('fNotes').value.trim(),
     created_at:new Date().toISOString()
   };
@@ -212,6 +265,7 @@ window.resetForm=function(){
   document.getElementById('failureForm').reset();
   document.getElementById('formCard').style.display='';
   document.getElementById('successMsg').style.display='none';
+  if(profile)document.getElementById('fTech').value=profile.name;
   setSev('Total Failure');setProd(false);setMT('Corrective');
 };
 
@@ -222,7 +276,7 @@ function loadRecent(){
     el.innerHTML=r.data.map(function(f){
       var d=new Date(f.created_at);
       var dt=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-      return '<div class="recent-item"><strong>'+esc(f.machine)+'</strong> &mdash; '+esc(f.type)+' ('+esc(f.severity)+')<br><span>'+esc(f.technician)+' &middot; '+dt+(f.repair_time?' &middot; '+f.repair_time+' min repair':'')+'</span></div>';
+      return '<div class="recent-item"><strong>'+esc(f.machine)+'</strong> &mdash; '+esc(f.type)+' ('+esc(f.severity)+')<br><span>'+esc(f.technician)+(f.badge?' ('+esc(f.badge)+')':'')+' &middot; '+dt+(f.repair_time?' &middot; '+f.repair_time+' min repair':'')+'</span></div>';
     }).join('');
   });
 }
