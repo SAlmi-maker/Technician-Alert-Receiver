@@ -227,6 +227,7 @@ var alerts=[];
 var knownIds={};
 var currentTab='open';
 var lastNotifTime=0;
+var VAPID_PUBLIC='BOSXF6lnCxxvTWtgpB8uMQEDb0d77qCdlslzdFvr_UQa06KFFgoQlq3FxkEX0coRr8AajgWcqkJcx2LO6t-RPQ8';
 
 // ══ LOGIN ══
 window.doLogin=function(){
@@ -240,15 +241,66 @@ window.doLogin=function(){
   document.getElementById('techDisplayName').textContent=name;
   document.getElementById('techAvatar').textContent=name.charAt(0).toUpperCase();
   initSupabase();
+  subscribePush();
 };
 
 window.doLogout=function(){
+  unsubscribePush();
   techName='';
   localStorage.removeItem('tech_name');
   document.getElementById('loginScreen').style.display='';
   document.getElementById('appMain').style.display='none';
   document.getElementById('loginName').value='';
 };
+
+// ══ PUSH NOTIFICATIONS ══
+function urlBase64ToUint8Array(base64String){
+  var padding='='.repeat((4-base64String.length%4)%4);
+  var base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  var rawData=atob(base64);
+  var outputArray=new Uint8Array(rawData.length);
+  for(var i=0;i<rawData.length;++i){outputArray[i]=rawData.charCodeAt(i)}
+  return outputArray;
+}
+
+async function subscribePush(){
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){console.log('[MMS-Tech] Push not supported');return}
+    var reg=await navigator.serviceWorker.register('sw.js');
+    console.log('[MMS-Tech] Service worker registered');
+    var permission=await Notification.requestPermission();
+    if(permission!=='granted'){console.log('[MMS-Tech] Notification permission denied');return}
+    var existing=await reg.pushManager.getSubscription();
+    if(existing)await existing.unsubscribe();
+    var sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC)});
+    var subJson=sub.toJSON();
+    await sb.from('push_subscriptions').upsert({
+      endpoint:subJson.endpoint,
+      p256dh:subJson.keys.p256dh,
+      auth:subJson.keys.auth,
+      tech_name:techName,
+      user_agent:navigator.userAgent,
+      created_at:new Date().toISOString()
+    },{onConflict:'endpoint'});
+    console.log('[MMS-Tech] Push subscription saved');
+  }catch(e){console.error('[MMS-Tech] Push subscribe failed',e)}
+}
+
+async function unsubscribePush(){
+  try{
+    if(!('serviceWorker' in navigator))return;
+    var regs=await navigator.serviceWorker.getRegistrations();
+    for(var i=0;i<regs.length;i++){
+      var sub=await regs[i].pushManager.getSubscription();
+      if(sub){
+        var ep=sub.endpoint;
+        await sub.unsubscribe();
+        await sb.from('push_subscriptions').delete().eq('endpoint',ep);
+      }
+    }
+    console.log('[MMS-Tech] Push unsubscribed');
+  }catch(e){console.error('[MMS-Tech] Push unsubscribe failed',e)}
+}
 
 // Enter key on login
 document.getElementById('loginName').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
