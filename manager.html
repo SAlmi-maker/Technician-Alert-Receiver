@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fujikura - Team Leader Dashboard</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #fff;
+            padding: 0 40px;
+            height: 64px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo img { height: 32px; width: auto; }
+
+        .header-right { display: flex; align-items: center; gap: 16px; }
+
+        .sync-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #e8f5e9;
+            color: #2E7D32;
+        }
+
+        .sync-badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+        .refresh-time {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .page {
+            display: none;
+            padding: 30px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .page.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-buttons { display: flex; gap: 6px; }
+
+        .nav-btn {
+            padding: 9px 22px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .nav-btn.active { background: #1a1a2e; color: #fff; }
+        .nav-btn:hover:not(.active) { background: #e8e8e8; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+
+        .stat-card .stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-green .stat-number { color: #4CAF50; }
+        .stat-blue .stat-number { color: #2196F3; }
+        .stat-red .stat-number { color: #e94560; }
+        .stat-yellow .stat-number { color: #F9A825; }
+        .stat-gray .stat-number { color: #999; }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title svg { width: 20px; height: 20px; color: #e94560; }
+
+        .machines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .machine-card {
+            border: 2px solid #eee;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .machine-card:hover { border-color: #ccc; }
+
+        .machine-card .mc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .machine-card .mc-id {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .machine-card .mc-location {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .machine-card .mc-status {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .machine-card .mc-time {
+            font-size: 0.75rem;
+            color: #bbb;
+            margin-top: 10px;
+        }
+
+        .mc-status-working { background: #e8f5e9; color: #2E7D32; }
+        .mc-status-maintenance { background: #e3f2fd; color: #1565C0; }
+        .mc-status-stopping { background: #fde7e7; color: #c62828; }
+        .mc-status-technician { background: #fff8e1; color: #F57F17; }
+        .mc-status-unknown { background: #f5f5f5; color: #999; }
+
+        .mc-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .mc-dot-working { background: #4CAF50; }
+        .mc-dot-maintenance { background: #2196F3; }
+        .mc-dot-stopping { background: #e94560; }
+        .mc-dot-technician { background: #F9A825; }
+        .mc-dot-unknown { background: #ccc; }
+
+        .table-container { overflow-x: auto; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .data-table th {
+            font-weight: 700;
+            color: #999;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table tr:hover td { background: #fafafa; }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-working { background: #e8f5e9; color: #2E7D32; }
+        .badge-maintenance { background: #e3f2fd; color: #1565C0; }
+        .badge-stopping { background: #fde7e7; color: #c62828; }
+        .badge-technician { background: #fff8e1; color: #F57F17; }
+        .badge-operational { background: #e8f5e9; color: #2E7D32; }
+        .badge-partial { background: #fff8e1; color: #F57F17; }
+        .badge-down { background: #fde7e7; color: #c62828; }
+
+        .alert-item {
+            border-left: 4px solid;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+            background: #fafafa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .alert-item.al-maintenance { border-left-color: #2196F3; }
+        .alert-item.al-stopping { border-left-color: #e94560; }
+        .alert-item.al-technician { border-left-color: #F9A825; }
+
+        .alert-item h4 { font-size: 0.92rem; margin-bottom: 2px; }
+        .alert-item p { font-size: 0.82rem; color: #888; }
+
+        .dismiss-btn {
+            padding: 6px 16px;
+            background: transparent;
+            border: 1.5px solid #ddd;
+            color: #999;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .dismiss-btn:hover { border-color: #e94560; color: #e94560; }
+
+        .empty-msg { text-align: center; color: #bbb; padding: 40px; font-size: 1rem; }
+
+        .export-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .export-pdf { background: #fde7e7; color: #c62828; }
+        .export-pdf:hover { background: #c62828; color: #fff; }
+
+        .export-excel {
+            background: #e8f5e9;
+            color: #2E7D32;
+            padding: 9px 20px;
+            font-size: 0.82rem;
+        }
+
+        .export-excel:hover { background: #2E7D32; color: #fff; }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            padding: 9px 14px;
+            border: 1.5px solid #ddd;
+            background: #fff;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: #888;
+        }
+
+        .auto-refresh input[type="checkbox"] {
+            accent-color: #e94560;
+            width: 16px;
+            height: 16px;
+        }
+
+        @media (max-width: 900px) {
+            header { padding: 0 16px; flex-direction: column; height: auto; padding: 12px 16px; gap: 8px; }
+            .page { padding: 16px; }
+            .two-col { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="https://www.europe.fujikura.com" target="_blank" rel="noopener" style="display:flex; align-items:center;">
+                <img src="https://www.europe.fujikura.com/wp-content/uploads/2024/04/Fujikura-Logo-Colour.svg" alt="Fujikura">
+            </a>
+            <span class="sync-badge">
+                <span class="dot"></span>
+                Live
+            </span>
+        </div>
+        <div class="header-right">
+            <div class="auto-refresh">
+                <input type="checkbox" id="autoRefresh" checked onchange="toggleAutoRefresh()">
+                <label for="autoRefresh">Auto-refresh (10s)</label>
+            </div>
+            <span class="refresh-time" id="refreshTime"></span>
+            <div class="nav-buttons">
+                <button class="nav-btn active" onclick="showPage('dashboard', this)">Dashboard</button>
+                <button class="nav-btn" onclick="showPage('alerts', this)">Alerts</button>
+                <button class="nav-btn" onclick="showPage('reports', this)">Reports</button>
+                <button class="nav-btn" onclick="showPage('machines', this)">Machines</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- DASHBOARD PAGE -->
+    <div id="dashboard-page" class="page active">
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card stat-green"><div class="stat-number" id="statWorking">0</div><div class="stat-label">Working</div></div>
+            <div class="stat-card stat-blue"><div class="stat-number" id="statMaint">0</div><div class="stat-label">Needs Maintenance</div></div>
+            <div class="stat-card stat-red"><div class="stat-number" id="statStop">0</div><div class="stat-label">Stopped</div></div>
+            <div class="stat-card stat-yellow"><div class="stat-number" id="statTech">0</div><div class="stat-label">Tech Working</div></div>
+            <div class="stat-card stat-gray"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Total Machines</div></div>
+        </div>
+
+        <div class="two-col">
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    Latest Alerts
+                </div>
+                <div id="dashAlerts"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Recent Activity
+                </div>
+                <div id="dashActivity"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERTS PAGE -->
+    <div id="alerts-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                All Pending Alerts
+            </div>
+            <div id="allAlerts"></div>
+        </div>
+    </div>
+
+    <!-- REPORTS PAGE -->
+    <div id="reports-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                Maintenance Reports
+            </div>
+            <div class="filter-bar">
+                <input type="text" id="filterMachine" placeholder="Filter by machine..." oninput="renderReports()">
+                <input type="date" id="filterDate" onchange="renderReports()">
+                <select id="filterPostStatus" onchange="renderReports()">
+                    <option value="">All statuses</option>
+                    <option value="Operational">Operational</option>
+                    <option value="Partial">Partial</option>
+                    <option value="Down">Still Down</option>
+                </select>
+            </div>
+            <div class="filter-bar">
+                <label style="font-size:0.82rem; font-weight:600; color:#555; text-transform:uppercase; letter-spacing:0.3px;">Export by Month:</label>
+                <input type="month" id="exportMonth">
+                <button class="export-btn export-excel" onclick="exportExcel()">Export Excel</button>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Tech ID</th>
+                            <th>Machine</th>
+                            <th>Location</th>
+                            <th>Type</th>
+                            <th>Problem</th>
+                            <th>Parts</th>
+                            <th>Waiting (min)</th>
+                            <th>Maintenance (min)</th>
+                            <th>Downtime (min)</th>
+                            <th>Status After</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MACHINES PAGE -->
+    <div id="machines-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                All Machines Status
+            </div>
+            <div class="filter-bar">
+                <select id="filterMachineStatus" onchange="renderMachines()">
+                    <option value="">All Machines</option>
+                    <option value="Working Well">Working Well</option>
+                    <option value="Needs Maintenance">Needs Maintenance</option>
+                    <option value="Stopping">Stopping</option>
+                    <option value="Technician Working">Technician Working</option>
+                </select>
+            </div>
+            <div class="machines-grid" id="machinesGrid"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                All Status History
+            </div>
+            <div class="filter-bar">
+                <input type="text" id="filterHistoryMachine" placeholder="Filter by machine..." oninput="renderFullHistory()">
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Machine</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fullHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* ==============================================================
+           CONFIGURATION
+        ============================================================== */
+        var autoRefreshInterval = null;
+        var REFRESH_MS = 10000;
+
+        /* ==============================================================
+           DATA LAYER - reads from localStorage
+           Machine websites write to keys like:
+             reports_MCH-042, alerts_MCH-042, mreports_MCH-042
+           This manager reads all keys matching those patterns.
+        ============================================================== */
+        function getAllKeys(prefix) {
+            var keys = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k.indexOf(prefix) === 0) keys.push(k);
+            }
+            return keys;
+        }
+
+        function getAllReports() {
+            var all = [];
+            var keys = getAllKeys('reports_');
+            keys.forEach(function(k) {
+                try {
+                    var arr = JSON.parse(localStorage.getItem(k) || '[]');
+                    all = all.concat(arr);
+                } catch(e) {}
+            });
+            all.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
+            return all;
+        }
+
+        function getAllAlerts() {
+            var all = [];
+            var keys = getAllKeys('alerts_');
+            keys.forEach(function(k) {
+                try {
+                    var arr = JSON.parse(localStorage.getItem(k) || '[]');
+                    all = all.concat(arr);
+                } catch(e) {}
+            });
+            all.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
+            return all;
+        }
+
+        function getAllMaintenanceReports() {
+            var all = [];
+            var keys = getAllKeys('mreports_');
+            keys.forEach(function(k) {
+                try {
+                    var arr = JSON.parse(localStorage.getItem(k) || '[]');
+                    all = all.concat(arr);
+                } catch(e) {}
+            });
+            all.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
+            return all;
+        }
+
+        function getLatestStatusPerMachine() {
+            var reports = getAllReports();
+            var machines = {};
+            reports.forEach(function(r) {
+                if (!machines[r.machineId] || r.id > machines[r.machineId].id) {
+                    machines[r.machineId] = r;
+                }
+            });
+            return machines;
+        }
+
+        /* ==============================================================
+           API RECEIVER - for future connection with machine websites
+           When you deploy a backend, machines will POST to:
+             POST /api/event
+             Body: { event, timestamp, machineId, location, payload }
+           This function processes incoming events and stores them.
+        ============================================================== */
+        function receiveMachineEvent(eventData) {
+            var evt = eventData.event;
+            var machineId = eventData.machineId;
+            var payload = eventData.payload;
+
+            if (evt === 'operator-report') {
+                var key = 'reports_' + machineId;
+                var arr = JSON.parse(localStorage.getItem(key) || '[]');
+                arr.unshift(payload);
+                if (arr.length > 100) arr.pop();
+                localStorage.setItem(key, JSON.stringify(arr));
+
+                if (payload.status !== 'Working Well' && payload.status !== 'Technician Working') {
+                    var aKey = 'alerts_' + machineId;
+                    var alerts = JSON.parse(localStorage.getItem(aKey) || '[]');
+                    alerts.unshift(payload);
+                    localStorage.setItem(aKey, JSON.stringify(alerts));
+                }
+            }
+
+            if (evt === 'maintenance-report') {
+                var mKey = 'mreports_' + machineId;
+                var mArr = JSON.parse(localStorage.getItem(mKey) || '[]');
+                mArr.unshift(payload);
+                localStorage.setItem(mKey, JSON.stringify(mArr));
+            }
+
+            refreshAll();
+        }
+
+        /* ==============================================================
+           NAVIGATION
+        ============================================================== */
+        function showPage(page, btn) {
+            document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+            document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.getElementById(page + '-page').classList.add('active');
+            btn.classList.add('active');
+            refreshAll();
+        }
+
+        /* ==============================================================
+           RENDERING
+        ============================================================== */
+        function refreshAll() {
+            renderStats();
+            renderDashAlerts();
+            renderDashActivity();
+            renderAllAlerts();
+            renderReports();
+            renderMachines();
+            renderFullHistory();
+            document.getElementById('refreshTime').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+        }
+
+        function renderStats() {
+            var machines = getLatestStatusPerMachine();
+            var ids = Object.keys(machines);
+            var working = 0, maint = 0, stopped = 0, tech = 0;
+
+            ids.forEach(function(id) {
+                var s = machines[id].status;
+                if (s === 'Working Well') working++;
+                else if (s === 'Needs Maintenance') maint++;
+                else if (s === 'Stopping') stopped++;
+                else if (s === 'Technician Working') tech++;
+            });
+
+            document.getElementById('statWorking').textContent = working;
+            document.getElementById('statMaint').textContent = maint;
+            document.getElementById('statStop').textContent = stopped;
+            document.getElementById('statTech').textContent = tech;
+            document.getElementById('statTotal').textContent = ids.length;
+        }
+
+        function renderDashAlerts() {
+            var alerts = getAllAlerts().slice(0, 5);
+            var el = document.getElementById('dashAlerts');
+            el.innerHTML = '';
+
+            if (alerts.length === 0) {
+                el.innerHTML = '<div class="empty-msg">No pending alerts</div>';
+                return;
+            }
+
+            alerts.forEach(function(a) {
+                var cls = a.status === 'Stopping' ? 'al-stopping' : 'al-maintenance';
+                el.innerHTML += '<div class="alert-item ' + cls + '">' +
+                    '<div><h4>' + a.status + ' - ' + a.machineId + '</h4>' +
+                    '<p>' + (a.location || '') + ' | ' + a.time + '</p></div></div>';
+            });
+        }
+
+        function renderDashActivity() {
+            var reports = getAllReports().slice(0, 8);
+            var el = document.getElementById('dashActivity');
+            el.innerHTML = '';
+
+            if (reports.length === 0) {
+                el.innerHTML = '<div class="empty-msg">No activity yet</div>';
+                return;
+            }
+
+            reports.forEach(function(r) {
+                var badge = 'badge-' + r.status.toLowerCase().replace(/\s/g, '').replace('needs', '').replace('well', 'working');
+                if (r.status === 'Working Well') badge = 'badge-working';
+                else if (r.status === 'Needs Maintenance') badge = 'badge-maintenance';
+                else if (r.status === 'Stopping') badge = 'badge-stopping';
+                else if (r.status === 'Technician Working') badge = 'badge-technician';
+
+                el.innerHTML += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f5f5f5;">' +
+                    '<span style="font-size:0.88rem;"><strong>' + r.machineId + '</strong></span>' +
+                    '<span class="status-badge ' + badge + '">' + r.status + '</span>' +
+                    '</div>';
+            });
+        }
+
+        function renderAllAlerts() {
+            var alerts = getAllAlerts();
+            var el = document.getElementById('allAlerts');
+            el.innerHTML = '';
+
+            if (alerts.length === 0) {
+                el.innerHTML = '<div class="empty-msg">No pending alerts</div>';
+                return;
+            }
+
+            alerts.forEach(function(a, idx) {
+                var cls = a.status === 'Stopping' ? 'al-stopping' : 'al-maintenance';
+                el.innerHTML += '<div class="alert-item ' + cls + '">' +
+                    '<div><h4>' + a.status + ' - Machine ' + a.machineId + '</h4>' +
+                    '<p>' + (a.location || '') + ' | ' + a.time + '</p></div>' +
+                    '<button class="dismiss-btn" onclick="dismissAlert(\'' + a.machineId + '\', ' + a.id + ')">Dismiss</button></div>';
+            });
+        }
+
+        function dismissAlert(machineId, alertId) {
+            var key = 'alerts_' + machineId;
+            var alerts = JSON.parse(localStorage.getItem(key) || '[]');
+            alerts = alerts.filter(function(a) { return a.id !== alertId; });
+            localStorage.setItem(key, JSON.stringify(alerts));
+            refreshAll();
+            showToast('Alert dismissed');
+        }
+
+        function renderReports() {
+            var reports = getAllMaintenanceReports();
+            var filterM = document.getElementById('filterMachine').value.toLowerCase();
+            var filterD = document.getElementById('filterDate').value;
+            var filterS = document.getElementById('filterPostStatus').value;
+
+            if (filterM) reports = reports.filter(function(r) { return r.machineId.toLowerCase().indexOf(filterM) !== -1; });
+            if (filterD) reports = reports.filter(function(r) { return r.date === filterD; });
+            if (filterS) reports = reports.filter(function(r) { return r.postStatus === filterS; });
+
+            var tbody = document.getElementById('reportsBody');
+            tbody.innerHTML = '';
+
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">No maintenance reports found</td></tr>';
+                return;
+            }
+
+            reports.forEach(function(r) {
+                var postBadge = 'badge-' + r.postStatus.toLowerCase().replace(/\s/g, '');
+                if (r.postStatus === 'Partial') postBadge = 'badge-partial';
+                if (r.postStatus === 'Down') postBadge = 'badge-down';
+                if (r.postStatus === 'Operational') postBadge = 'badge-operational';
+
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + r.date + '</td>' +
+                    '<td>' + r.techId + '</td>' +
+                    '<td>' + r.machineId + '</td>' +
+                    '<td>' + (r.location || '-') + '</td>' +
+                    '<td>' + r.type + '</td>' +
+                    '<td>' + (r.problem || '-') + '</td>' +
+                    '<td>' + (r.parts || '-') + '</td>' +
+                    '<td>' + (r.waitingTime != null ? r.waitingTime : '-') + '</td>' +
+                    '<td>' + (r.maintenanceTime != null ? r.maintenanceTime : '-') + '</td>' +
+                    '<td>' + (r.downtime != null ? r.downtime : '-') + '</td>' +
+                    '<td><span class="status-badge ' + postBadge + '">' + r.postStatus + '</span></td>' +
+                    '<td><button class="export-btn export-pdf" onclick="exportPDF(this)" data-report=\'' + JSON.stringify({date:r.date,techId:r.techId,machineId:r.machineId,location:r.location,type:r.type,problem:r.problem,actions:r.actions,parts:r.parts,waitingTime:r.waitingTime,maintenanceTime:r.maintenanceTime,downtime:r.downtime,postStatus:r.postStatus,notes:r.notes,checklist:r.checklist}) + '\'>PDF</button></td>' +
+                    '</tr>';
+            });
+        }
+
+        function renderMachines() {
+            var machines = getLatestStatusPerMachine();
+            var ids = Object.keys(machines);
+            var filterVal = document.getElementById('filterMachineStatus').value;
+            var grid = document.getElementById('machinesGrid');
+            grid.innerHTML = '';
+
+            if (ids.length === 0) {
+                grid.innerHTML = '<div class="empty-msg">No machines reporting yet</div>';
+                return;
+            }
+
+            var filtered = ids.filter(function(id) {
+                if (!filterVal) return true;
+                return machines[id].status === filterVal;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="empty-msg">No machines match this filter</div>';
+                return;
+            }
+
+            filtered.sort().forEach(function(id) {
+                var r = machines[id];
+                var statusClass = 'unknown';
+                var dotClass = 'mc-dot-unknown';
+
+                if (r.status === 'Working Well') { statusClass = 'working'; dotClass = 'mc-dot-working'; }
+                else if (r.status === 'Needs Maintenance') { statusClass = 'maintenance'; dotClass = 'mc-dot-maintenance'; }
+                else if (r.status === 'Stopping') { statusClass = 'stopping'; dotClass = 'mc-dot-stopping'; }
+                else if (r.status === 'Technician Working') { statusClass = 'technician'; dotClass = 'mc-dot-technician'; }
+
+                grid.innerHTML += '<div class="machine-card">' +
+                    '<div class="mc-header"><span class="mc-id">' + r.machineId + '</span>' +
+                    '<span class="mc-dot ' + dotClass + '"></span></div>' +
+                    '<div class="mc-location">' + (r.location || 'Unknown location') + '</div>' +
+                    '<span class="mc-status mc-status-' + statusClass + '">' + r.status + '</span>' +
+                    '<div class="mc-time">' + r.time + '</div></div>';
+            });
+        }
+
+        function renderFullHistory() {
+            var reports = getAllReports();
+            var filterM = document.getElementById('filterHistoryMachine').value.toLowerCase();
+
+            if (filterM) reports = reports.filter(function(r) { return r.machineId.toLowerCase().indexOf(filterM) !== -1; });
+
+            var tbody = document.getElementById('fullHistoryBody');
+            tbody.innerHTML = '';
+
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-msg">No history yet</td></tr>';
+                return;
+            }
+
+            reports.slice(0, 100).forEach(function(r) {
+                var badge = 'badge-working';
+                if (r.status === 'Needs Maintenance') badge = 'badge-maintenance';
+                else if (r.status === 'Stopping') badge = 'badge-stopping';
+                else if (r.status === 'Technician Working') badge = 'badge-technician';
+
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + r.time + '</td>' +
+                    '<td>' + r.machineId + '</td>' +
+                    '<td>' + (r.location || '-') + '</td>' +
+                    '<td><span class="status-badge ' + badge + '">' + r.status + '</span></td>' +
+                    '</tr>';
+            });
+        }
+
+        /* ==============================================================
+           AUTO REFRESH
+        ============================================================== */
+        function toggleAutoRefresh() {
+            if (document.getElementById('autoRefresh').checked) {
+                autoRefreshInterval = setInterval(refreshAll, REFRESH_MS);
+            } else {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+
+        /* ==============================================================
+           EXPORT PDF - Single Report
+        ============================================================== */
+        function exportPDF(btn) {
+            var data = JSON.parse(btn.getAttribute('data-report'));
+            var w = window.open('', '_blank');
+            var checkHtml = '';
+            if (data.checklist && data.checklist.length) {
+                checkHtml = '<h3>Checklist</h3><table border="1" cellpadding="6" cellspacing="0" style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">' +
+                    '<tr style="background:#f5f5f5;"><th style="text-align:left;">Item</th><th style="text-align:left;">Done</th></tr>';
+                data.checklist.forEach(function(c) {
+                    checkHtml += '<tr><td>' + c.item + '</td><td>' + (c.done ? 'Yes' : 'No') + '</td></tr>';
+                });
+                checkHtml += '</table>';
+            }
+
+            w.document.write(
+                '<!DOCTYPE html><html><head><title>Report - ' + data.machineId + '</title>' +
+                '<style>body{font-family:Segoe UI,sans-serif;padding:40px;color:#1a1a2e;}' +
+                'h1{font-size:22px;margin-bottom:4px;}h2{font-size:16px;color:#e94560;margin:0 0 20px 0;border-bottom:2px solid #e94560;padding-bottom:8px;}' +
+                'h3{font-size:14px;margin:16px 0 8px 0;color:#555;}' +
+                'table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;}' +
+                'td,th{padding:8px 10px;border:1px solid #ddd;text-align:left;vertical-align:top;}' +
+                'th{background:#f5f5f5;font-weight:600;width:160px;}' +
+                '.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;}' +
+                '.b-op{background:#e8f5e9;color:#2E7D32;}.b-pa{background:#fff8e1;color:#F57F17;}.b-dn{background:#fde7e7;color:#c62828;}' +
+                '@media print{body{padding:20px;}}</style></head><body>' +
+                '<h1>Fujikura - Maintenance Report</h1>' +
+                '<h2>Maintenance Declaration Sheet</h2>' +
+                '<table>' +
+                '<tr><th>Machine ID</th><td>' + data.machineId + '</td></tr>' +
+                '<tr><th>Location</th><td>' + (data.location || '-') + '</td></tr>' +
+                '<tr><th>Technician ID</th><td>' + data.techId + '</td></tr>' +
+                '<tr><th>Date</th><td>' + data.date + '</td></tr>' +
+                '<tr><th>Maintenance Type</th><td>' + data.type + '</td></tr>' +
+                '<tr><th>Problem Description</th><td>' + (data.problem || '-') + '</td></tr>' +
+                '<tr><th>Actions Taken</th><td>' + (data.actions || '-') + '</td></tr>' +
+                '<tr><th>Parts Replaced</th><td>' + (data.parts || '-') + '</td></tr>' +
+                '<tr><th>Waiting Time</th><td>' + (data.waitingTime != null ? data.waitingTime + ' min' : '-') + '</td></tr>' +
+                '<tr><th>Maintenance Time</th><td>' + (data.maintenanceTime != null ? data.maintenanceTime + ' min' : '-') + '</td></tr>' +
+                '<tr><th>Total Downtime</th><td>' + (data.downtime != null ? data.downtime + ' min' : '-') + '</td></tr>' +
+                '<tr><th>Status After</th><td>' + data.postStatus + '</td></tr>' +
+                '<tr><th>Additional Notes</th><td>' + (data.notes || '-') + '</td></tr>' +
+                '</table>' +
+                checkHtml +
+                '<script>window.onload=function(){window.print();}<\/script>' +
+                '</body></html>'
+            );
+            w.document.close();
+        }
+
+        /* ==============================================================
+           EXPORT EXCEL - Multiple Reports by Month
+        ============================================================== */
+        function exportExcel() {
+            var monthVal = document.getElementById('exportMonth').value;
+            var reports = getAllMaintenanceReports();
+
+            if (monthVal) {
+                reports = reports.filter(function(r) {
+                    return r.date && r.date.indexOf(monthVal) === 0;
+                });
+            }
+
+            if (reports.length === 0) {
+                showToast('No reports found for this period');
+                return;
+            }
+
+            var rows = reports.map(function(r) {
+                var checkItems = '';
+                if (r.checklist && r.checklist.length) {
+                    r.checklist.forEach(function(c) {
+                        checkItems += c.item + ': ' + (c.done ? 'Yes' : 'No') + '; ';
+                    });
+                }
+                return {
+                    'Date': r.date || '',
+                    'Technician ID': r.techId || '',
+                    'Machine ID': r.machineId || '',
+                    'Location': r.location || '',
+                    'Type': r.type || '',
+                    'Problem': r.problem || '',
+                    'Actions': r.actions || '',
+                    'Parts Replaced': r.parts || '',
+                    'Waiting Time (min)': r.waitingTime != null ? r.waitingTime : '',
+                    'Maintenance Time (min)': r.maintenanceTime != null ? r.maintenanceTime : '',
+                    'Downtime (min)': r.downtime != null ? r.downtime : '',
+                    'Status After': r.postStatus || '',
+                    'Notes': r.notes || '',
+                    'Checklist': checkItems
+                };
+            });
+
+            var ws = XLSX.utils.json_to_sheet(rows);
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Maintenance Reports');
+
+            var colWidths = Object.keys(rows[0]).map(function(k) {
+                return { wch: Math.max(k.length + 2, 18) };
+            });
+            ws['!cols'] = colWidths;
+
+            var fileName = monthVal ? 'Maintenance_Reports_' + monthVal + '.xlsx' : 'Maintenance_Reports_All.xlsx';
+            XLSX.writeFile(wb, fileName);
+            showToast('Excel exported: ' + rows.length + ' reports');
+        }
+
+        /* ==============================================================
+           TOAST
+        ============================================================== */
+        function showToast(msg) {
+            var toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(function() { toast.classList.remove('show'); }, 3000);
+        }
+
+        /* ==============================================================
+           INIT
+        ============================================================== */
+        refreshAll();
+        toggleAutoRefresh();
+    </script>
+
+</body>
+</html>
