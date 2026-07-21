@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fujikura - Team Leader Dashboard</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -553,111 +554,66 @@
 
     <script>
         /* ==============================================================
+           SUPABASE
+        ============================================================== */
+        var SB_URL = 'https://tnmiqirhcmrletclftjo.supabase.co';
+        var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubWlxaXJoY21ybGV0Y2xmdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTkyMDIsImV4cCI6MjA5NjQ5NTIwMn0.4yerG6tvGT_8BeoRzCmzeZrae1BlFNpjB6LHpc7gdQA';
+        var supabase = window.supabase.createClient(SB_URL, SB_KEY);
+
+        /* ==============================================================
            CONFIGURATION
         ============================================================== */
         var autoRefreshInterval = null;
         var REFRESH_MS = 10000;
 
         /* ==============================================================
-           DATA LAYER - reads from localStorage
-           Machine websites write to keys like:
-             reports_MCH-042, alerts_MCH-042, mreports_MCH-042
-           This manager reads all keys matching those patterns.
+           DATA LAYER - Supabase
         ============================================================== */
-        function getAllKeys(prefix) {
-            var keys = [];
-            for (var i = 0; i < localStorage.length; i++) {
-                var k = localStorage.key(i);
-                if (k.indexOf(prefix) === 0) keys.push(k);
-            }
-            return keys;
+        async function getAllReports() {
+            var { data } = await supabase
+                .from('reports')
+                .select('*')
+                .order('id', { ascending: false })
+                .limit(500);
+            return data || [];
         }
 
-        function getAllReports() {
-            var all = [];
-            var keys = getAllKeys('reports_');
-            keys.forEach(function(k) {
-                try {
-                    var arr = JSON.parse(localStorage.getItem(k) || '[]');
-                    all = all.concat(arr);
-                } catch(e) {}
-            });
-            all.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
-            return all;
+        async function getAllAlerts() {
+            var { data } = await supabase
+                .from('alerts')
+                .select('*')
+                .eq('resolved', false)
+                .order('id', { ascending: false });
+            return data || [];
         }
 
-        function getAllAlerts() {
-            var all = [];
-            var keys = getAllKeys('alerts_');
-            keys.forEach(function(k) {
-                try {
-                    var arr = JSON.parse(localStorage.getItem(k) || '[]');
-                    all = all.concat(arr);
-                } catch(e) {}
-            });
-            all.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
-            return all;
+        async function getAllMaintenanceReports() {
+            var { data } = await supabase
+                .from('maintenance_reports')
+                .select('*')
+                .order('id', { ascending: false })
+                .limit(500);
+            return data || [];
         }
 
-        function getAllMaintenanceReports() {
-            var all = [];
-            var keys = getAllKeys('mreports_');
-            keys.forEach(function(k) {
-                try {
-                    var arr = JSON.parse(localStorage.getItem(k) || '[]');
-                    all = all.concat(arr);
-                } catch(e) {}
-            });
-            all.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
-            return all;
-        }
-
-        function getLatestStatusPerMachine() {
-            var reports = getAllReports();
+        async function getLatestStatusPerMachine() {
+            var reports = await getAllReports();
             var machines = {};
             reports.forEach(function(r) {
-                if (!machines[r.machineId] || r.id > machines[r.machineId].id) {
-                    machines[r.machineId] = r;
+                if (!machines[r.machine_id] || r.id > machines[r.machine_id].id) {
+                    machines[r.machine_id] = r;
                 }
             });
             return machines;
         }
 
-        /* ==============================================================
-           API RECEIVER - for future connection with machine websites
-           When you deploy a backend, machines will POST to:
-             POST /api/event
-             Body: { event, timestamp, machineId, location, payload }
-           This function processes incoming events and stores them.
-        ============================================================== */
-        function receiveMachineEvent(eventData) {
-            var evt = eventData.event;
-            var machineId = eventData.machineId;
-            var payload = eventData.payload;
-
-            if (evt === 'operator-report') {
-                var key = 'reports_' + machineId;
-                var arr = JSON.parse(localStorage.getItem(key) || '[]');
-                arr.unshift(payload);
-                if (arr.length > 100) arr.pop();
-                localStorage.setItem(key, JSON.stringify(arr));
-
-                if (payload.status !== 'Working Well' && payload.status !== 'Technician Working') {
-                    var aKey = 'alerts_' + machineId;
-                    var alerts = JSON.parse(localStorage.getItem(aKey) || '[]');
-                    alerts.unshift(payload);
-                    localStorage.setItem(aKey, JSON.stringify(alerts));
-                }
-            }
-
-            if (evt === 'maintenance-report') {
-                var mKey = 'mreports_' + machineId;
-                var mArr = JSON.parse(localStorage.getItem(mKey) || '[]');
-                mArr.unshift(payload);
-                localStorage.setItem(mKey, JSON.stringify(mArr));
-            }
-
+        async function dismissAlert(machineId, alertId) {
+            await supabase
+                .from('alerts')
+                .update({ resolved: true })
+                .eq('id', alertId);
             refreshAll();
+            showToast('Alert dismissed');
         }
 
         /* ==============================================================
@@ -674,19 +630,21 @@
         /* ==============================================================
            RENDERING
         ============================================================== */
-        function refreshAll() {
-            renderStats();
-            renderDashAlerts();
-            renderDashActivity();
-            renderAllAlerts();
-            renderReports();
-            renderMachines();
-            renderFullHistory();
+        async function refreshAll() {
+            await Promise.all([
+                renderStats(),
+                renderDashAlerts(),
+                renderDashActivity(),
+                renderAllAlerts(),
+                renderReports(),
+                renderMachines(),
+                renderFullHistory()
+            ]);
             document.getElementById('refreshTime').textContent = 'Updated: ' + new Date().toLocaleTimeString();
         }
 
-        function renderStats() {
-            var machines = getLatestStatusPerMachine();
+        async function renderStats() {
+            var machines = await getLatestStatusPerMachine();
             var ids = Object.keys(machines);
             var working = 0, maint = 0, stopped = 0, tech = 0;
 
@@ -705,8 +663,8 @@
             document.getElementById('statTotal').textContent = ids.length;
         }
 
-        function renderDashAlerts() {
-            var alerts = getAllAlerts().slice(0, 5);
+        async function renderDashAlerts() {
+            var alerts = (await getAllAlerts()).slice(0, 5);
             var el = document.getElementById('dashAlerts');
             el.innerHTML = '';
 
@@ -718,13 +676,13 @@
             alerts.forEach(function(a) {
                 var cls = a.status === 'Stopping' ? 'al-stopping' : 'al-maintenance';
                 el.innerHTML += '<div class="alert-item ' + cls + '">' +
-                    '<div><h4>' + a.status + ' - ' + a.machineId + '</h4>' +
+                    '<div><h4>' + a.status + ' - ' + a.machine_id + '</h4>' +
                     '<p>' + (a.location || '') + ' | ' + a.time + '</p></div></div>';
             });
         }
 
-        function renderDashActivity() {
-            var reports = getAllReports().slice(0, 8);
+        async function renderDashActivity() {
+            var reports = (await getAllReports()).slice(0, 8);
             var el = document.getElementById('dashActivity');
             el.innerHTML = '';
 
@@ -734,21 +692,20 @@
             }
 
             reports.forEach(function(r) {
-                var badge = 'badge-' + r.status.toLowerCase().replace(/\s/g, '').replace('needs', '').replace('well', 'working');
-                if (r.status === 'Working Well') badge = 'badge-working';
-                else if (r.status === 'Needs Maintenance') badge = 'badge-maintenance';
+                var badge = 'badge-working';
+                if (r.status === 'Needs Maintenance') badge = 'badge-maintenance';
                 else if (r.status === 'Stopping') badge = 'badge-stopping';
                 else if (r.status === 'Technician Working') badge = 'badge-technician';
 
                 el.innerHTML += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f5f5f5;">' +
-                    '<span style="font-size:0.88rem;"><strong>' + r.machineId + '</strong></span>' +
+                    '<span style="font-size:0.88rem;"><strong>' + r.machine_id + '</strong></span>' +
                     '<span class="status-badge ' + badge + '">' + r.status + '</span>' +
                     '</div>';
             });
         }
 
-        function renderAllAlerts() {
-            var alerts = getAllAlerts();
+        async function renderAllAlerts() {
+            var alerts = await getAllAlerts();
             var el = document.getElementById('allAlerts');
             el.innerHTML = '';
 
@@ -757,33 +714,24 @@
                 return;
             }
 
-            alerts.forEach(function(a, idx) {
+            alerts.forEach(function(a) {
                 var cls = a.status === 'Stopping' ? 'al-stopping' : 'al-maintenance';
                 el.innerHTML += '<div class="alert-item ' + cls + '">' +
-                    '<div><h4>' + a.status + ' - Machine ' + a.machineId + '</h4>' +
+                    '<div><h4>' + a.status + ' - Machine ' + a.machine_id + '</h4>' +
                     '<p>' + (a.location || '') + ' | ' + a.time + '</p></div>' +
-                    '<button class="dismiss-btn" onclick="dismissAlert(\'' + a.machineId + '\', ' + a.id + ')">Dismiss</button></div>';
+                    '<button class="dismiss-btn" onclick="dismissAlert(\'' + a.machine_id + '\', ' + a.id + ')">Dismiss</button></div>';
             });
         }
 
-        function dismissAlert(machineId, alertId) {
-            var key = 'alerts_' + machineId;
-            var alerts = JSON.parse(localStorage.getItem(key) || '[]');
-            alerts = alerts.filter(function(a) { return a.id !== alertId; });
-            localStorage.setItem(key, JSON.stringify(alerts));
-            refreshAll();
-            showToast('Alert dismissed');
-        }
-
-        function renderReports() {
-            var reports = getAllMaintenanceReports();
+        async function renderReports() {
+            var reports = await getAllMaintenanceReports();
             var filterM = document.getElementById('filterMachine').value.toLowerCase();
             var filterD = document.getElementById('filterDate').value;
             var filterS = document.getElementById('filterPostStatus').value;
 
-            if (filterM) reports = reports.filter(function(r) { return r.machineId.toLowerCase().indexOf(filterM) !== -1; });
+            if (filterM) reports = reports.filter(function(r) { return r.machine_id.toLowerCase().indexOf(filterM) !== -1; });
             if (filterD) reports = reports.filter(function(r) { return r.date === filterD; });
-            if (filterS) reports = reports.filter(function(r) { return r.postStatus === filterS; });
+            if (filterS) reports = reports.filter(function(r) { return r.post_status === filterS; });
 
             var tbody = document.getElementById('reportsBody');
             tbody.innerHTML = '';
@@ -794,30 +742,30 @@
             }
 
             reports.forEach(function(r) {
-                var postBadge = 'badge-' + r.postStatus.toLowerCase().replace(/\s/g, '');
-                if (r.postStatus === 'Partial') postBadge = 'badge-partial';
-                if (r.postStatus === 'Down') postBadge = 'badge-down';
-                if (r.postStatus === 'Operational') postBadge = 'badge-operational';
+                var postBadge = 'badge-' + r.post_status.toLowerCase().replace(/\s/g, '');
+                if (r.post_status === 'Partial') postBadge = 'badge-partial';
+                if (r.post_status === 'Down') postBadge = 'badge-down';
+                if (r.post_status === 'Operational') postBadge = 'badge-operational';
 
                 tbody.innerHTML += '<tr>' +
                     '<td>' + r.date + '</td>' +
-                    '<td>' + r.techId + '</td>' +
-                    '<td>' + r.machineId + '</td>' +
+                    '<td>' + r.tech_id + '</td>' +
+                    '<td>' + r.machine_id + '</td>' +
                     '<td>' + (r.location || '-') + '</td>' +
                     '<td>' + r.type + '</td>' +
                     '<td>' + (r.problem || '-') + '</td>' +
                     '<td>' + (r.parts || '-') + '</td>' +
-                    '<td>' + (r.waitingTime != null ? r.waitingTime : '-') + '</td>' +
-                    '<td>' + (r.maintenanceTime != null ? r.maintenanceTime : '-') + '</td>' +
+                    '<td>' + (r.waiting_time != null ? r.waiting_time : '-') + '</td>' +
+                    '<td>' + (r.maintenance_time != null ? r.maintenance_time : '-') + '</td>' +
                     '<td>' + (r.downtime != null ? r.downtime : '-') + '</td>' +
-                    '<td><span class="status-badge ' + postBadge + '">' + r.postStatus + '</span></td>' +
-                    '<td><button class="export-btn export-pdf" onclick="exportPDF(this)" data-report=\'' + JSON.stringify({date:r.date,techId:r.techId,machineId:r.machineId,location:r.location,type:r.type,problem:r.problem,actions:r.actions,parts:r.parts,waitingTime:r.waitingTime,maintenanceTime:r.maintenanceTime,downtime:r.downtime,postStatus:r.postStatus,notes:r.notes,checklist:r.checklist}) + '\'>PDF</button></td>' +
+                    '<td><span class="status-badge ' + postBadge + '">' + r.post_status + '</span></td>' +
+                    '<td><button class="export-btn export-pdf" onclick="exportPDF(this)" data-report=\'' + JSON.stringify({date:r.date,techId:r.tech_id,machineId:r.machine_id,location:r.location,type:r.type,problem:r.problem,actions:r.actions,parts:r.parts,waitingTime:r.waiting_time,maintenanceTime:r.maintenance_time,downtime:r.downtime,postStatus:r.post_status,notes:r.notes,checklist:r.checklist}) + '\'>PDF</button></td>' +
                     '</tr>';
             });
         }
 
-        function renderMachines() {
-            var machines = getLatestStatusPerMachine();
+        async function renderMachines() {
+            var machines = await getLatestStatusPerMachine();
             var ids = Object.keys(machines);
             var filterVal = document.getElementById('filterMachineStatus').value;
             var grid = document.getElementById('machinesGrid');
@@ -849,7 +797,7 @@
                 else if (r.status === 'Technician Working') { statusClass = 'technician'; dotClass = 'mc-dot-technician'; }
 
                 grid.innerHTML += '<div class="machine-card">' +
-                    '<div class="mc-header"><span class="mc-id">' + r.machineId + '</span>' +
+                    '<div class="mc-header"><span class="mc-id">' + r.machine_id + '</span>' +
                     '<span class="mc-dot ' + dotClass + '"></span></div>' +
                     '<div class="mc-location">' + (r.location || 'Unknown location') + '</div>' +
                     '<span class="mc-status mc-status-' + statusClass + '">' + r.status + '</span>' +
@@ -857,11 +805,11 @@
             });
         }
 
-        function renderFullHistory() {
-            var reports = getAllReports();
+        async function renderFullHistory() {
+            var reports = await getAllReports();
             var filterM = document.getElementById('filterHistoryMachine').value.toLowerCase();
 
-            if (filterM) reports = reports.filter(function(r) { return r.machineId.toLowerCase().indexOf(filterM) !== -1; });
+            if (filterM) reports = reports.filter(function(r) { return r.machine_id.toLowerCase().indexOf(filterM) !== -1; });
 
             var tbody = document.getElementById('fullHistoryBody');
             tbody.innerHTML = '';
@@ -879,7 +827,7 @@
 
                 tbody.innerHTML += '<tr>' +
                     '<td>' + r.time + '</td>' +
-                    '<td>' + r.machineId + '</td>' +
+                    '<td>' + r.machine_id + '</td>' +
                     '<td>' + (r.location || '-') + '</td>' +
                     '<td><span class="status-badge ' + badge + '">' + r.status + '</span></td>' +
                     '</tr>';
@@ -951,9 +899,9 @@
         /* ==============================================================
            EXPORT EXCEL - Multiple Reports by Month
         ============================================================== */
-        function exportExcel() {
+        async function exportExcel() {
             var monthVal = document.getElementById('exportMonth').value;
-            var reports = getAllMaintenanceReports();
+            var reports = await getAllMaintenanceReports();
 
             if (monthVal) {
                 reports = reports.filter(function(r) {
@@ -975,17 +923,17 @@
                 }
                 return {
                     'Date': r.date || '',
-                    'Technician ID': r.techId || '',
-                    'Machine ID': r.machineId || '',
+                    'Technician ID': r.tech_id || '',
+                    'Machine ID': r.machine_id || '',
                     'Location': r.location || '',
                     'Type': r.type || '',
                     'Problem': r.problem || '',
                     'Actions': r.actions || '',
                     'Parts Replaced': r.parts || '',
-                    'Waiting Time (min)': r.waitingTime != null ? r.waitingTime : '',
-                    'Maintenance Time (min)': r.maintenanceTime != null ? r.maintenanceTime : '',
+                    'Waiting Time (min)': r.waiting_time != null ? r.waiting_time : '',
+                    'Maintenance Time (min)': r.maintenance_time != null ? r.maintenance_time : '',
                     'Downtime (min)': r.downtime != null ? r.downtime : '',
-                    'Status After': r.postStatus || '',
+                    'Status After': r.post_status || '',
                     'Notes': r.notes || '',
                     'Checklist': checkItems
                 };
