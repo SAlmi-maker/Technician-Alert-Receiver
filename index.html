@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fujikura - Team Leader Dashboard</title>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Fujikura - Machine Status</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -30,9 +28,7 @@
         }
 
         .logo { display: flex; align-items: center; gap: 12px; }
-        .logo img { height: 32px; width: auto; }
-
-        .header-right { display: flex; align-items: center; gap: 16px; }
+        .logo svg { height: 32px; width: auto; }
 
         .sync-badge {
             display: inline-flex;
@@ -44,6 +40,7 @@
             font-weight: 600;
             background: #e8f5e9;
             color: #2E7D32;
+            margin-left: 12px;
         }
 
         .sync-badge .dot {
@@ -52,28 +49,6 @@
             border-radius: 50%;
             background: #4CAF50;
             animation: blink 2s infinite;
-        }
-
-        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-
-        .refresh-time {
-            font-size: 0.8rem;
-            color: #999;
-        }
-
-        .page {
-            display: none;
-            padding: 30px 40px;
-            max-width: 1400px;
-            margin: 0 auto;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .page.active { display: block; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .nav-buttons { display: flex; gap: 6px; }
@@ -93,41 +68,20 @@
         .nav-btn.active { background: #1a1a2e; color: #fff; }
         .nav-btn:hover:not(.active) { background: #e8e8e8; }
 
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+        .page {
+            display: none;
+            padding: 30px 40px;
+            max-width: 1100px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s ease;
         }
 
-        .stat-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-            text-align: center;
-        }
+        .page.active { display: block; }
 
-        .stat-card .stat-number {
-            font-size: 2.2rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 4px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .stat-card .stat-label {
-            font-size: 0.8rem;
-            color: #999;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-
-        .stat-green .stat-number { color: #4CAF50; }
-        .stat-blue .stat-number { color: #2196F3; }
-        .stat-red .stat-number { color: #e94560; }
-        .stat-yellow .stat-number { color: #F9A825; }
-        .stat-gray .stat-number { color: #999; }
 
         .card {
             background: #fff;
@@ -151,93 +105,111 @@
 
         .card-title svg { width: 20px; height: 20px; color: #e94560; }
 
-        .machines-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 16px;
-        }
-
-        .machine-card {
-            border: 2px solid #eee;
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .machine-card:hover { border-color: #ccc; }
-
-        .machine-card .mc-header {
+        .machine-info-bar {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            padding: 20px 0;
         }
 
-        .machine-card .mc-id {
-            font-size: 1.1rem;
-            font-weight: 700;
+        .info-item {
+            text-align: center;
         }
 
-        .machine-card .mc-location {
-            font-size: 0.8rem;
-            color: #888;
-            margin-bottom: 12px;
-        }
-
-        .machine-card .mc-status {
-            display: inline-block;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.78rem;
-            font-weight: 700;
+        .info-item .info-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #999;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .info-item .info-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .circles-container {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            padding: 20px 0;
+        }
+
+        .circle-btn {
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #fff;
+            transition: all 0.25s ease;
+        }
+
+        .circle-btn:hover { transform: scale(1.06); }
+        .circle-btn:active { transform: scale(0.94); }
+        .circle-btn svg { width: 40px; height: 40px; margin-bottom: 10px; }
+
+        .circle-btn .label {
+            font-size: 0.85rem;
+            text-align: center;
+            line-height: 1.3;
             letter-spacing: 0.3px;
         }
 
-        .machine-card .mc-time {
-            font-size: 0.75rem;
-            color: #bbb;
-            margin-top: 10px;
+        .circle-blue { background: #2196F3; box-shadow: 0 6px 20px rgba(33, 150, 243, 0.35); }
+        .circle-blue:hover { box-shadow: 0 8px 28px rgba(33, 150, 243, 0.5); }
+
+        .circle-red { background: #e94560; box-shadow: 0 6px 20px rgba(233, 69, 96, 0.35); }
+        .circle-red:hover { box-shadow: 0 8px 28px rgba(233, 69, 96, 0.5); }
+
+        .circle-green { background: #4CAF50; box-shadow: 0 6px 20px rgba(76, 175, 80, 0.35); }
+        .circle-green:hover { box-shadow: 0 8px 28px rgba(76, 175, 80, 0.5); }
+
+        .circle-yellow { background: #F9A825; box-shadow: 0 6px 20px rgba(249, 168, 37, 0.35); }
+        .circle-yellow:hover { box-shadow: 0 8px 28px rgba(249, 168, 37, 0.5); }
+
+        .pulse { animation: pulse 0.5s ease; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+            100% { transform: scale(1); }
         }
 
-        .mc-status-working { background: #e8f5e9; color: #2E7D32; }
-        .mc-status-maintenance { background: #e3f2fd; color: #1565C0; }
-        .mc-status-stopping { background: #fde7e7; color: #c62828; }
-        .mc-status-technician { background: #fff8e1; color: #F57F17; }
-        .mc-status-unknown { background: #f5f5f5; color: #999; }
-
-        .mc-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 6px;
+        .last-status {
+            text-align: center;
+            padding: 10px;
+            margin-top: 8px;
         }
 
-        .mc-dot-working { background: #4CAF50; }
-        .mc-dot-maintenance { background: #2196F3; }
-        .mc-dot-stopping { background: #e94560; }
-        .mc-dot-technician { background: #F9A825; }
-        .mc-dot-unknown { background: #ccc; }
-
-        .table-container { overflow-x: auto; }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
+        .last-status-text {
+            font-size: 0.9rem;
+            color: #999;
         }
 
-        .data-table th,
-        .data-table td {
+        .last-status-text strong { color: #1a1a2e; }
+
+        .history-table { width: 100%; border-collapse: collapse; }
+
+        .history-table th,
+        .history-table td {
             padding: 12px 14px;
             text-align: left;
             border-bottom: 1px solid #f0f0f0;
             font-size: 0.9rem;
-            white-space: nowrap;
         }
 
-        .data-table th {
+        .history-table th {
             font-weight: 700;
             color: #999;
             font-size: 0.78rem;
@@ -245,7 +217,7 @@
             letter-spacing: 0.5px;
         }
 
-        .data-table tr:hover td { background: #fafafa; }
+        .history-table tr:hover td { background: #fafafa; }
 
         .status-badge {
             padding: 4px 12px;
@@ -257,97 +229,103 @@
             letter-spacing: 0.3px;
         }
 
-        .badge-working { background: #e8f5e9; color: #2E7D32; }
-        .badge-maintenance { background: #e3f2fd; color: #1565C0; }
-        .badge-stopping { background: #fde7e7; color: #c62828; }
         .badge-technician { background: #fff8e1; color: #F57F17; }
-        .badge-operational { background: #e8f5e9; color: #2E7D32; }
-        .badge-partial { background: #fff8e1; color: #F57F17; }
-        .badge-down { background: #fde7e7; color: #c62828; }
+        .badge-maintenance { background: #e3f2fd; color: #1565C0; }
+        .badge-working { background: #e8f5e9; color: #2E7D32; }
+        .badge-stopping { background: #fde7e7; color: #c62828; }
 
-        .alert-item {
-            border-left: 4px solid;
-            padding: 14px 18px;
-            margin-bottom: 10px;
-            border-radius: 0 8px 8px 0;
-            background: #fafafa;
+        .form-row {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
-            gap: 8px;
         }
 
-        .alert-item.al-maintenance { border-left-color: #2196F3; }
-        .alert-item.al-stopping { border-left-color: #e94560; }
-        .alert-item.al-technician { border-left-color: #F9A825; }
+        .form-group { flex: 1; min-width: 180px; }
 
-        .alert-item h4 { font-size: 0.92rem; margin-bottom: 2px; }
-        .alert-item p { font-size: 0.82rem; color: #888; }
-
-        .dismiss-btn {
-            padding: 6px 16px;
-            background: transparent;
-            border: 1.5px solid #ddd;
-            color: #999;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.8rem;
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.82rem;
             font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .dismiss-btn:hover { border-color: #e94560; color: #e94560; }
-
-        .empty-msg { text-align: center; color: #bbb; padding: 40px; font-size: 1rem; }
-
-        .export-btn {
-            padding: 6px 14px;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
+            color: #555;
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
 
-        .export-pdf { background: #fde7e7; color: #c62828; }
-        .export-pdf:hover { background: #c62828; color: #fff; }
-
-        .export-excel {
-            background: #e8f5e9;
-            color: #2E7D32;
-            padding: 9px 20px;
-            font-size: 0.82rem;
-        }
-
-        .export-excel:hover { background: #2E7D32; color: #fff; }
-
-        .filter-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .filter-bar input,
-        .filter-bar select {
-            padding: 9px 14px;
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
             border: 1.5px solid #ddd;
-            background: #fff;
+            background: #fafafa;
+            color: #1a1a2e;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-family: inherit;
+            transition: border-color 0.2s;
         }
 
-        .filter-bar input:focus,
-        .filter-bar select:focus {
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: #e94560;
+            background: #fff;
         }
+
+        .form-group textarea { resize: vertical; min-height: 90px; }
+
+        .checklist { margin: 8px 0; }
+
+        .checklist h3 {
+            font-size: 0.85rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            margin-top: 8px;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .check-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #e94560;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .check-item label { cursor: pointer; font-size: 0.92rem; color: #444; }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #1a1a2e;
+            border: none;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .submit-btn:hover { background: #e94560; transform: translateY(-1px); }
+
+        .empty-msg { text-align: center; color: #bbb; padding: 40px; font-size: 1rem; }
 
         .toast {
             position: fixed;
@@ -367,31 +345,111 @@
 
         .toast.show { transform: translateX(-50%) translateY(0); }
 
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
+        .clear-btn {
+            padding: 8px 20px;
+            background: transparent;
+            border: 1.5px solid #ddd;
+            color: #999;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            transition: all 0.2s;
+            margin-top: 16px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .auto-refresh {
+        .clear-btn:hover { border-color: #e94560; color: #e94560; }
+
+        .settings-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1.5px solid #ddd;
+            background: #fff;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.82rem;
-            color: #888;
+            justify-content: center;
+            color: #666;
+            transition: all 0.2s;
+            margin-left: 8px;
         }
 
-        .auto-refresh input[type="checkbox"] {
-            accent-color: #e94560;
-            width: 16px;
-            height: 16px;
+        .settings-btn:hover { border-color: #e94560; color: #e94560; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
         }
 
-        @media (max-width: 900px) {
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: #fff;
+            border-radius: 14px;
+            padding: 32px;
+            width: 90%;
+            max-width: 440px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: modalIn 0.25s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal h2 svg { width: 20px; height: 20px; color: #e94560; }
+
+        .modal .form-group { margin-bottom: 16px; }
+
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .modal-btns button {
+            flex: 1;
+            padding: 11px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .modal-save { background: #1a1a2e; color: #fff; }
+        .modal-save:hover { background: #e94560; }
+
+        .modal-cancel { background: #f0f0f0; color: #555; }
+        .modal-cancel:hover { background: #e0e0e0; }
+
+        @media (max-width: 768px) {
             header { padding: 0 16px; flex-direction: column; height: auto; padding: 12px 16px; gap: 8px; }
             .page { padding: 16px; }
-            .two-col { grid-template-columns: 1fr; }
-            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .circles-container { gap: 16px; }
+            .circle-btn { width: 140px; height: 140px; }
+            .circle-btn svg { width: 32px; height: 32px; }
+            .machine-info-bar { gap: 24px; }
+            .form-row { flex-direction: column; }
         }
     </style>
 </head>
@@ -400,158 +458,242 @@
     <header>
         <div class="logo">
             <a href="https://www.europe.fujikura.com" target="_blank" rel="noopener" style="display:flex; align-items:center;">
-                <img src="https://www.europe.fujikura.com/wp-content/uploads/2024/04/Fujikura-Logo-Colour.svg" alt="Fujikura">
+                <img src="https://www.europe.fujikura.com/wp-content/uploads/2024/04/Fujikura-Logo-Colour.svg" alt="Fujikura" style="height:32px; width:auto;">
             </a>
             <span class="sync-badge">
                 <span class="dot"></span>
-                Live
+                Supabase Connected
             </span>
         </div>
-        <div class="header-right">
-            <div class="auto-refresh">
-                <input type="checkbox" id="autoRefresh" checked onchange="toggleAutoRefresh()">
-                <label for="autoRefresh">Auto-refresh (10s)</label>
-            </div>
-            <span class="refresh-time" id="refreshTime"></span>
-            <div class="nav-buttons">
-                <button class="nav-btn active" onclick="showPage('dashboard', this)">Dashboard</button>
-                <button class="nav-btn" onclick="showPage('alerts', this)">Alerts</button>
-                <button class="nav-btn" onclick="showPage('reports', this)">Reports</button>
-                <button class="nav-btn" onclick="showPage('machines', this)">Machines</button>
-            </div>
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="showPage('operator', this)">Operator Panel</button>
+            <button class="nav-btn" onclick="showPage('maintenance', this)">Maintenance Sheet</button>
+            <button class="settings-btn" onclick="openSettings()" title="Machine Settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
         </div>
     </header>
 
-    <!-- DASHBOARD PAGE -->
-    <div id="dashboard-page" class="page active">
-        <div class="stats-row" id="statsRow">
-            <div class="stat-card stat-green"><div class="stat-number" id="statWorking">0</div><div class="stat-label">Working</div></div>
-            <div class="stat-card stat-blue"><div class="stat-number" id="statMaint">0</div><div class="stat-label">Needs Maintenance</div></div>
-            <div class="stat-card stat-red"><div class="stat-number" id="statStop">0</div><div class="stat-label">Stopped</div></div>
-            <div class="stat-card stat-yellow"><div class="stat-number" id="statTech">0</div><div class="stat-label">Tech Working</div></div>
-            <div class="stat-card stat-gray"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Total Machines</div></div>
-        </div>
+    <!-- OPERATOR PAGE -->
+    <div id="operator-page" class="page active">
 
-        <div class="two-col">
-            <div class="card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    Latest Alerts
-                </div>
-                <div id="dashAlerts"></div>
-            </div>
-            <div class="card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    Recent Activity
-                </div>
-                <div id="dashActivity"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ALERTS PAGE -->
-    <div id="alerts-page" class="page">
-        <div class="card">
-            <div class="card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                All Pending Alerts
-            </div>
-            <div id="allAlerts"></div>
-        </div>
-    </div>
-
-    <!-- REPORTS PAGE -->
-    <div id="reports-page" class="page">
-        <div class="card">
-            <div class="card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                Maintenance Reports
-            </div>
-            <div class="filter-bar">
-                <input type="text" id="filterMachine" placeholder="Filter by machine..." oninput="renderReports()">
-                <input type="date" id="filterDate" onchange="renderReports()">
-                <select id="filterPostStatus" onchange="renderReports()">
-                    <option value="">All statuses</option>
-                    <option value="Operational">Operational</option>
-                    <option value="Partial">Partial</option>
-                    <option value="Down">Still Down</option>
-                </select>
-            </div>
-            <div class="filter-bar">
-                <label style="font-size:0.82rem; font-weight:600; color:#555; text-transform:uppercase; letter-spacing:0.3px;">Export by Month:</label>
-                <input type="month" id="exportMonth">
-                <button class="export-btn export-excel" onclick="exportExcel()">Export Excel</button>
-            </div>
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Tech ID</th>
-                            <th>Machine</th>
-                            <th>Location</th>
-                            <th>Type</th>
-                            <th>Problem</th>
-                            <th>Parts</th>
-                            <th>Waiting (min)</th>
-                            <th>Maintenance (min)</th>
-                            <th>Downtime (min)</th>
-                            <th>Status After</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="reportsBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- MACHINES PAGE -->
-    <div id="machines-page" class="page">
         <div class="card">
             <div class="card-title">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                All Machines Status
+                Machine Information
             </div>
-            <div class="filter-bar">
-                <select id="filterMachineStatus" onchange="renderMachines()">
-                    <option value="">All Machines</option>
-                    <option value="Working Well">Working Well</option>
-                    <option value="Needs Maintenance">Needs Maintenance</option>
-                    <option value="Stopping">Stopping</option>
-                    <option value="Technician Working">Technician Working</option>
-                </select>
+            <div class="machine-info-bar">
+                <div class="info-item">
+                    <div class="info-label">Machine ID</div>
+                    <div class="info-value" id="displayMachineId"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Location</div>
+                    <div class="info-value" id="displayLocation"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Current Time</div>
+                    <div class="info-value" id="displayTime" style="font-size:1.1rem;"></div>
+                </div>
             </div>
-            <div class="machines-grid" id="machinesGrid"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Machine Status
+            </div>
+            <p style="text-align:center; color:#999; margin-bottom:10px; font-size:0.9rem;">Select the current status of this machine</p>
+            <div class="circles-container">
+                <button class="circle-btn circle-blue" onclick="reportStatus('Needs Maintenance', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <span class="label">Needs<br>Maintenance</span>
+                </button>
+                <button class="circle-btn circle-red" onclick="reportStatus('Stopping', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                    <span class="label">Machine<br>Stopping</span>
+                </button>
+                <button class="circle-btn circle-green" onclick="reportStatus('Working Well', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span class="label">Working<br>Well</span>
+                </button>
+                <button class="circle-btn circle-yellow" onclick="reportStatus('Technician Working', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/></svg>
+                    <span class="label">Technician<br>Working</span>
+                </button>
+            </div>
+            <div class="last-status" id="lastStatusBox" style="display:none;">
+                <span class="last-status-text">Last reported: <strong id="lastStatusText"></strong></span>
+            </div>
         </div>
 
         <div class="card">
             <div class="card-title">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                All Status History
+                Recent Reports
             </div>
-            <div class="filter-bar">
-                <input type="text" id="filterHistoryMachine" placeholder="Filter by machine..." oninput="renderFullHistory()">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+            <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+        </div>
+    </div>
+
+    <!-- MAINTENANCE PAGE -->
+    <div id="maintenance-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                Maintenance Declaration Sheet
             </div>
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Machine</th>
-                            <th>Location</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="fullHistoryBody"></tbody>
-                </table>
+
+            <div class="machine-info-bar" style="margin-bottom:20px;">
+                <div class="info-item">
+                    <div class="info-label">Machine ID</div>
+                    <div class="info-value" id="maintDisplayMachine"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Location</div>
+                    <div class="info-value" id="maintDisplayLocation"></div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Technician ID</label>
+                    <input type="text" id="techId" placeholder="e.g. TEC-018">
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="maintDate">
+                </div>
+                <div class="form-group">
+                    <label>Shift</label>
+                    <select id="maintShift">
+                        <option value="Morning">Morning</option>
+                        <option value="Afternoon">Afternoon</option>
+                        <option value="Night">Night</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Maintenance Type</label>
+                    <input type="text" id="maintType" value="Corrective" readonly style="background:#f0f0f0; color:#555; cursor:not-allowed;">
+                </div>
+            </div>
+
+            <div class="checklist">
+                <h3>Pre-Maintenance Checklist</h3>
+                <div class="check-item">
+                    <input type="checkbox" id="check1">
+                    <label for="check1">Machine completely stopped and locked out (LOTO)</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="check2">
+                    <label for="check2">Area cleaned and secured</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="check3">
+                    <label for="check3">Spare parts available and verified</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="check4">
+                    <label for="check4">Required tools prepared</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="check5">
+                    <label for="check5">Safety PPE worn</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="check6">
+                    <label for="check6">Operator informed of maintenance start</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="check7">
+                    <label for="check7">Machine tested after maintenance</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="check8">
+                    <label for="check8">Operator informed of maintenance completion</label>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Problem Description</label>
+                    <textarea id="problemDesc" placeholder="Describe the issue found..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Actions Taken</label>
+                    <textarea id="actionsTaken" placeholder="Describe maintenance actions performed..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Parts Replaced</label>
+                    <input type="text" id="partsReplaced" placeholder="e.g. Blade, Belt, Sensor">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Machine Status After Maintenance</label>
+                    <select id="postStatus">
+                        <option value="Operational">Operational</option>
+                        <option value="Partial">Partial - Reduced Capacity</option>
+                        <option value="Down">Still Down - Needs Follow-up</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Additional Notes</label>
+                    <textarea id="addNotes" placeholder="Any other observations..."></textarea>
+                </div>
+            </div>
+
+            <button class="submit-btn" onclick="submitMaintenance()">Submit Maintenance Report</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                Machine Settings
+            </h2>
+            <div class="form-group">
+                <label>Machine ID</label>
+                <input type="text" id="settingsMachineId" placeholder="e.g. MCH-042">
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="settingsLocation" placeholder="e.g. Building A - Line 3">
+            </div>
+            <div class="modal-btns">
+                <button class="modal-cancel" onclick="closeSettings()">Cancel</button>
+                <button class="modal-save" onclick="saveSettings()">Save</button>
             </div>
         </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         /* ==============================================================
            SUPABASE
@@ -561,59 +703,127 @@
         var supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
         /* ==============================================================
-           CONFIGURATION
+           CONFIGURATION - Defaults for each machine computer
+           Operator can change these from the settings panel.
         ============================================================== */
-        var autoRefreshInterval = null;
-        var REFRESH_MS = 10000;
+        var MACHINE_ID = localStorage.getItem('cfg_machineId') || "MCH-042";
+        var LOCATION   = localStorage.getItem('cfg_location')   || "Building A - Line 3";
+
+        /* ==============================================================
+           INIT
+        ============================================================== */
+        function refreshDisplays() {
+            document.getElementById('displayMachineId').textContent = MACHINE_ID;
+            document.getElementById('displayLocation').textContent   = LOCATION;
+            document.getElementById('maintDisplayMachine').textContent = MACHINE_ID;
+            document.getElementById('maintDisplayLocation').textContent = LOCATION;
+        }
+
+        refreshDisplays();
+        document.getElementById('maintDate').valueAsDate = new Date();
+        renderHistory();
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        function updateClock() {
+            document.getElementById('displayTime').textContent = new Date().toLocaleTimeString();
+        }
+
+        /* ==============================================================
+           SETTINGS
+        ============================================================== */
+        function openSettings() {
+            document.getElementById('settingsMachineId').value = MACHINE_ID;
+            document.getElementById('settingsLocation').value = LOCATION;
+            document.getElementById('settingsModal').classList.add('open');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('open');
+        }
+
+        function saveSettings() {
+            var newId = document.getElementById('settingsMachineId').value.trim();
+            var newLoc = document.getElementById('settingsLocation').value.trim();
+
+            if (!newId || !newLoc) {
+                showToast('Machine ID and Location are required', '#c62828');
+                return;
+            }
+
+            MACHINE_ID = newId;
+            LOCATION = newLoc;
+            localStorage.setItem('cfg_machineId', MACHINE_ID);
+            localStorage.setItem('cfg_location', LOCATION);
+
+            refreshDisplays();
+            renderHistory();
+            closeSettings();
+            showToast('Machine info updated', '#4CAF50');
+        }
+
+        document.getElementById('settingsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSettings();
+        });
 
         /* ==============================================================
            DATA LAYER - Supabase
         ============================================================== */
-        async function getAllReports() {
+        async function getReports() {
             var { data } = await supabase
                 .from('reports')
                 .select('*')
+                .eq('machine_id', MACHINE_ID)
                 .order('id', { ascending: false })
-                .limit(500);
+                .limit(100);
             return data || [];
         }
 
-        async function getAllAlerts() {
-            var { data } = await supabase
-                .from('alerts')
-                .select('*')
-                .eq('resolved', false)
-                .order('id', { ascending: false });
-            return data || [];
-        }
-
-        async function getAllMaintenanceReports() {
-            var { data } = await supabase
-                .from('maintenance_reports')
-                .select('*')
-                .order('id', { ascending: false })
-                .limit(500);
-            return data || [];
-        }
-
-        async function getLatestStatusPerMachine() {
-            var reports = await getAllReports();
-            var machines = {};
-            reports.forEach(function(r) {
-                if (!machines[r.machine_id] || r.id > machines[r.machine_id].id) {
-                    machines[r.machine_id] = r;
-                }
+        async function saveReport(report) {
+            var { error } = await supabase.from('reports').insert({
+                id: report.id,
+                iso_time: report.isoTime,
+                time: report.time,
+                machine_id: report.machineId,
+                location: report.location,
+                status: report.status
             });
-            return machines;
+            if (error) console.error('[Save Report]', error);
         }
 
-        async function dismissAlert(machineId, alertId) {
-            await supabase
-                .from('alerts')
-                .update({ resolved: true })
-                .eq('id', alertId);
-            refreshAll();
-            showToast('Alert dismissed');
+        async function saveAlert(alert) {
+            var { error } = await supabase.from('alerts').insert({
+                id: alert.id,
+                iso_time: alert.isoTime,
+                time: alert.time,
+                machine_id: alert.machineId,
+                location: alert.location,
+                status: alert.status
+            });
+            if (error) console.error('[Save Alert]', error);
+        }
+
+        async function saveMaintenanceReport(report) {
+            var { error } = await supabase.from('maintenance_reports').insert({
+                id: report.id,
+                iso_time: report.isoTime,
+                tech_id: report.techId,
+                date: report.date,
+                shift: report.shift,
+                machine_id: report.machineId,
+                location: report.location,
+                type: report.type,
+                checklist: report.checklist,
+                problem: report.problem,
+                actions: report.actions,
+                parts: report.parts,
+                waiting_time: report.waitingTime,
+                maintenance_time: report.maintenanceTime,
+                downtime: report.downtime,
+                post_status: report.postStatus,
+                notes: report.notes
+            });
+            if (error) console.error('[Save Maint]', error);
         }
 
         /* ==============================================================
@@ -624,350 +834,175 @@
             document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
             document.getElementById(page + '-page').classList.add('active');
             btn.classList.add('active');
-            refreshAll();
         }
 
         /* ==============================================================
-           RENDERING
+           OPERATOR - just click a circle
         ============================================================== */
-        async function refreshAll() {
-            await Promise.all([
-                renderStats(),
-                renderDashAlerts(),
-                renderDashActivity(),
-                renderAllAlerts(),
-                renderReports(),
-                renderMachines(),
-                renderFullHistory()
-            ]);
-            document.getElementById('refreshTime').textContent = 'Updated: ' + new Date().toLocaleTimeString();
-        }
+        async function reportStatus(status, btnEl) {
+            try {
+                var now = new Date();
+                var report = {
+                    id: Date.now(),
+                    time: now.toLocaleString(),
+                    isoTime: now.toISOString(),
+                    machineId: MACHINE_ID,
+                    location: LOCATION,
+                    status: status
+                };
 
-        async function renderStats() {
-            var machines = await getLatestStatusPerMachine();
-            var ids = Object.keys(machines);
-            var working = 0, maint = 0, stopped = 0, tech = 0;
+                await saveReport(report);
 
-            ids.forEach(function(id) {
-                var s = machines[id].status;
-                if (s === 'Working Well') working++;
-                else if (s === 'Needs Maintenance') maint++;
-                else if (s === 'Stopping') stopped++;
-                else if (s === 'Technician Working') tech++;
-            });
-
-            document.getElementById('statWorking').textContent = working;
-            document.getElementById('statMaint').textContent = maint;
-            document.getElementById('statStop').textContent = stopped;
-            document.getElementById('statTech').textContent = tech;
-            document.getElementById('statTotal').textContent = ids.length;
-        }
-
-        async function renderDashAlerts() {
-            var alerts = (await getAllAlerts()).slice(0, 5);
-            var el = document.getElementById('dashAlerts');
-            el.innerHTML = '';
-
-            if (alerts.length === 0) {
-                el.innerHTML = '<div class="empty-msg">No pending alerts</div>';
-                return;
-            }
-
-            alerts.forEach(function(a) {
-                var cls = a.status === 'Stopping' ? 'al-stopping' : 'al-maintenance';
-                el.innerHTML += '<div class="alert-item ' + cls + '">' +
-                    '<div><h4>' + a.status + ' - ' + a.machine_id + '</h4>' +
-                    '<p>' + (a.location || '') + ' | ' + a.time + '</p></div></div>';
-            });
-        }
-
-        async function renderDashActivity() {
-            var reports = (await getAllReports()).slice(0, 8);
-            var el = document.getElementById('dashActivity');
-            el.innerHTML = '';
-
-            if (reports.length === 0) {
-                el.innerHTML = '<div class="empty-msg">No activity yet</div>';
-                return;
-            }
-
-            reports.forEach(function(r) {
-                var badge = 'badge-working';
-                if (r.status === 'Needs Maintenance') badge = 'badge-maintenance';
-                else if (r.status === 'Stopping') badge = 'badge-stopping';
-                else if (r.status === 'Technician Working') badge = 'badge-technician';
-
-                el.innerHTML += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f5f5f5;">' +
-                    '<span style="font-size:0.88rem;"><strong>' + r.machine_id + '</strong></span>' +
-                    '<span class="status-badge ' + badge + '">' + r.status + '</span>' +
-                    '</div>';
-            });
-        }
-
-        async function renderAllAlerts() {
-            var alerts = await getAllAlerts();
-            var el = document.getElementById('allAlerts');
-            el.innerHTML = '';
-
-            if (alerts.length === 0) {
-                el.innerHTML = '<div class="empty-msg">No pending alerts</div>';
-                return;
-            }
-
-            alerts.forEach(function(a) {
-                var cls = a.status === 'Stopping' ? 'al-stopping' : 'al-maintenance';
-                el.innerHTML += '<div class="alert-item ' + cls + '">' +
-                    '<div><h4>' + a.status + ' - Machine ' + a.machine_id + '</h4>' +
-                    '<p>' + (a.location || '') + ' | ' + a.time + '</p></div>' +
-                    '<button class="dismiss-btn" onclick="dismissAlert(\'' + a.machine_id + '\', ' + a.id + ')">Dismiss</button></div>';
-            });
-        }
-
-        async function renderReports() {
-            var reports = await getAllMaintenanceReports();
-            var filterM = document.getElementById('filterMachine').value.toLowerCase();
-            var filterD = document.getElementById('filterDate').value;
-            var filterS = document.getElementById('filterPostStatus').value;
-
-            if (filterM) reports = reports.filter(function(r) { return r.machine_id.toLowerCase().indexOf(filterM) !== -1; });
-            if (filterD) reports = reports.filter(function(r) { return r.date === filterD; });
-            if (filterS) reports = reports.filter(function(r) { return r.post_status === filterS; });
-
-            var tbody = document.getElementById('reportsBody');
-            tbody.innerHTML = '';
-
-            if (reports.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">No maintenance reports found</td></tr>';
-                return;
-            }
-
-            reports.forEach(function(r) {
-                var postBadge = 'badge-' + r.post_status.toLowerCase().replace(/\s/g, '');
-                if (r.post_status === 'Partial') postBadge = 'badge-partial';
-                if (r.post_status === 'Down') postBadge = 'badge-down';
-                if (r.post_status === 'Operational') postBadge = 'badge-operational';
-
-                tbody.innerHTML += '<tr>' +
-                    '<td>' + r.date + '</td>' +
-                    '<td>' + r.tech_id + '</td>' +
-                    '<td>' + r.machine_id + '</td>' +
-                    '<td>' + (r.location || '-') + '</td>' +
-                    '<td>' + r.type + '</td>' +
-                    '<td>' + (r.problem || '-') + '</td>' +
-                    '<td>' + (r.parts || '-') + '</td>' +
-                    '<td>' + (r.waiting_time != null ? r.waiting_time : '-') + '</td>' +
-                    '<td>' + (r.maintenance_time != null ? r.maintenance_time : '-') + '</td>' +
-                    '<td>' + (r.downtime != null ? r.downtime : '-') + '</td>' +
-                    '<td><span class="status-badge ' + postBadge + '">' + r.post_status + '</span></td>' +
-                    '<td><button class="export-btn export-pdf" onclick="exportPDF(this)" data-report=\'' + JSON.stringify({date:r.date,techId:r.tech_id,machineId:r.machine_id,location:r.location,type:r.type,problem:r.problem,actions:r.actions,parts:r.parts,waitingTime:r.waiting_time,maintenanceTime:r.maintenance_time,downtime:r.downtime,postStatus:r.post_status,notes:r.notes,checklist:r.checklist}) + '\'>PDF</button></td>' +
-                    '</tr>';
-            });
-        }
-
-        async function renderMachines() {
-            var machines = await getLatestStatusPerMachine();
-            var ids = Object.keys(machines);
-            var filterVal = document.getElementById('filterMachineStatus').value;
-            var grid = document.getElementById('machinesGrid');
-            grid.innerHTML = '';
-
-            if (ids.length === 0) {
-                grid.innerHTML = '<div class="empty-msg">No machines reporting yet</div>';
-                return;
-            }
-
-            var filtered = ids.filter(function(id) {
-                if (!filterVal) return true;
-                return machines[id].status === filterVal;
-            });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = '<div class="empty-msg">No machines match this filter</div>';
-                return;
-            }
-
-            filtered.sort().forEach(function(id) {
-                var r = machines[id];
-                var statusClass = 'unknown';
-                var dotClass = 'mc-dot-unknown';
-
-                if (r.status === 'Working Well') { statusClass = 'working'; dotClass = 'mc-dot-working'; }
-                else if (r.status === 'Needs Maintenance') { statusClass = 'maintenance'; dotClass = 'mc-dot-maintenance'; }
-                else if (r.status === 'Stopping') { statusClass = 'stopping'; dotClass = 'mc-dot-stopping'; }
-                else if (r.status === 'Technician Working') { statusClass = 'technician'; dotClass = 'mc-dot-technician'; }
-
-                grid.innerHTML += '<div class="machine-card">' +
-                    '<div class="mc-header"><span class="mc-id">' + r.machine_id + '</span>' +
-                    '<span class="mc-dot ' + dotClass + '"></span></div>' +
-                    '<div class="mc-location">' + (r.location || 'Unknown location') + '</div>' +
-                    '<span class="mc-status mc-status-' + statusClass + '">' + r.status + '</span>' +
-                    '<div class="mc-time">' + r.time + '</div></div>';
-            });
-        }
-
-        async function renderFullHistory() {
-            var reports = await getAllReports();
-            var filterM = document.getElementById('filterHistoryMachine').value.toLowerCase();
-
-            if (filterM) reports = reports.filter(function(r) { return r.machine_id.toLowerCase().indexOf(filterM) !== -1; });
-
-            var tbody = document.getElementById('fullHistoryBody');
-            tbody.innerHTML = '';
-
-            if (reports.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="empty-msg">No history yet</td></tr>';
-                return;
-            }
-
-            reports.slice(0, 100).forEach(function(r) {
-                var badge = 'badge-working';
-                if (r.status === 'Needs Maintenance') badge = 'badge-maintenance';
-                else if (r.status === 'Stopping') badge = 'badge-stopping';
-                else if (r.status === 'Technician Working') badge = 'badge-technician';
-
-                tbody.innerHTML += '<tr>' +
-                    '<td>' + r.time + '</td>' +
-                    '<td>' + r.machine_id + '</td>' +
-                    '<td>' + (r.location || '-') + '</td>' +
-                    '<td><span class="status-badge ' + badge + '">' + r.status + '</span></td>' +
-                    '</tr>';
-            });
-        }
-
-        /* ==============================================================
-           AUTO REFRESH
-        ============================================================== */
-        function toggleAutoRefresh() {
-            if (document.getElementById('autoRefresh').checked) {
-                autoRefreshInterval = setInterval(refreshAll, REFRESH_MS);
-            } else {
-                clearInterval(autoRefreshInterval);
-            }
-        }
-
-        /* ==============================================================
-           EXPORT PDF - Single Report
-        ============================================================== */
-        function exportPDF(btn) {
-            var data = JSON.parse(btn.getAttribute('data-report'));
-            var w = window.open('', '_blank');
-            var checkHtml = '';
-            if (data.checklist && data.checklist.length) {
-                checkHtml = '<h3>Checklist</h3><table border="1" cellpadding="6" cellspacing="0" style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">' +
-                    '<tr style="background:#f5f5f5;"><th style="text-align:left;">Item</th><th style="text-align:left;">Done</th></tr>';
-                data.checklist.forEach(function(c) {
-                    checkHtml += '<tr><td>' + c.item + '</td><td>' + (c.done ? 'Yes' : 'No') + '</td></tr>';
-                });
-                checkHtml += '</table>';
-            }
-
-            w.document.write(
-                '<!DOCTYPE html><html><head><title>Report - ' + data.machineId + '</title>' +
-                '<style>body{font-family:Segoe UI,sans-serif;padding:40px;color:#1a1a2e;}' +
-                'h1{font-size:22px;margin-bottom:4px;}h2{font-size:16px;color:#e94560;margin:0 0 20px 0;border-bottom:2px solid #e94560;padding-bottom:8px;}' +
-                'h3{font-size:14px;margin:16px 0 8px 0;color:#555;}' +
-                'table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;}' +
-                'td,th{padding:8px 10px;border:1px solid #ddd;text-align:left;vertical-align:top;}' +
-                'th{background:#f5f5f5;font-weight:600;width:160px;}' +
-                '.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;}' +
-                '.b-op{background:#e8f5e9;color:#2E7D32;}.b-pa{background:#fff8e1;color:#F57F17;}.b-dn{background:#fde7e7;color:#c62828;}' +
-                '@media print{body{padding:20px;}}</style></head><body>' +
-                '<h1>Fujikura - Maintenance Report</h1>' +
-                '<h2>Maintenance Declaration Sheet</h2>' +
-                '<table>' +
-                '<tr><th>Machine ID</th><td>' + data.machineId + '</td></tr>' +
-                '<tr><th>Location</th><td>' + (data.location || '-') + '</td></tr>' +
-                '<tr><th>Technician ID</th><td>' + data.techId + '</td></tr>' +
-                '<tr><th>Date</th><td>' + data.date + '</td></tr>' +
-                '<tr><th>Maintenance Type</th><td>' + data.type + '</td></tr>' +
-                '<tr><th>Problem Description</th><td>' + (data.problem || '-') + '</td></tr>' +
-                '<tr><th>Actions Taken</th><td>' + (data.actions || '-') + '</td></tr>' +
-                '<tr><th>Parts Replaced</th><td>' + (data.parts || '-') + '</td></tr>' +
-                '<tr><th>Waiting Time</th><td>' + (data.waitingTime != null ? data.waitingTime + ' min' : '-') + '</td></tr>' +
-                '<tr><th>Maintenance Time</th><td>' + (data.maintenanceTime != null ? data.maintenanceTime + ' min' : '-') + '</td></tr>' +
-                '<tr><th>Total Downtime</th><td>' + (data.downtime != null ? data.downtime + ' min' : '-') + '</td></tr>' +
-                '<tr><th>Status After</th><td>' + data.postStatus + '</td></tr>' +
-                '<tr><th>Additional Notes</th><td>' + (data.notes || '-') + '</td></tr>' +
-                '</table>' +
-                checkHtml +
-                '<script>window.onload=function(){window.print();}<\/script>' +
-                '</body></html>'
-            );
-            w.document.close();
-        }
-
-        /* ==============================================================
-           EXPORT EXCEL - Multiple Reports by Month
-        ============================================================== */
-        async function exportExcel() {
-            var monthVal = document.getElementById('exportMonth').value;
-            var reports = await getAllMaintenanceReports();
-
-            if (monthVal) {
-                reports = reports.filter(function(r) {
-                    return r.date && r.date.indexOf(monthVal) === 0;
-                });
-            }
-
-            if (reports.length === 0) {
-                showToast('No reports found for this period');
-                return;
-            }
-
-            var rows = reports.map(function(r) {
-                var checkItems = '';
-                if (r.checklist && r.checklist.length) {
-                    r.checklist.forEach(function(c) {
-                        checkItems += c.item + ': ' + (c.done ? 'Yes' : 'No') + '; ';
+                if (status !== 'Working Well' && status !== 'Technician Working') {
+                    await saveAlert({
+                        id: report.id + 1,
+                        time: report.time,
+                        isoTime: report.isoTime,
+                        machineId: MACHINE_ID,
+                        location: LOCATION,
+                        status: status
                     });
                 }
-                return {
-                    'Date': r.date || '',
-                    'Technician ID': r.tech_id || '',
-                    'Machine ID': r.machine_id || '',
-                    'Location': r.location || '',
-                    'Type': r.type || '',
-                    'Problem': r.problem || '',
-                    'Actions': r.actions || '',
-                    'Parts Replaced': r.parts || '',
-                    'Waiting Time (min)': r.waiting_time != null ? r.waiting_time : '',
-                    'Maintenance Time (min)': r.maintenance_time != null ? r.maintenance_time : '',
-                    'Downtime (min)': r.downtime != null ? r.downtime : '',
-                    'Status After': r.post_status || '',
-                    'Notes': r.notes || '',
-                    'Checklist': checkItems
-                };
+
+                renderHistory();
+
+                if (btnEl) {
+                    btnEl.classList.add('pulse');
+                    setTimeout(function() { btnEl.classList.remove('pulse'); }, 500);
+                }
+
+                document.getElementById('lastStatusBox').style.display = 'block';
+                document.getElementById('lastStatusText').textContent = status + ' at ' + report.time;
+
+                showToast(status + ' reported', status === 'Working Well' ? '#2E7D32' : '#1565C0');
+            } catch (err) {
+                console.error('[reportStatus]', err);
+                showToast('Error: ' + err.message, '#c62828');
+            }
+        }
+
+        async function renderHistory() {
+            var reports = await getReports();
+            var tbody = document.getElementById('historyBody');
+            tbody.innerHTML = '';
+
+            reports.slice(0, 20).forEach(function(r) {
+                var badgeClass = {
+                    'Working Well': 'badge-working',
+                    'Needs Maintenance': 'badge-maintenance',
+                    'Technician Working': 'badge-technician',
+                    'Stopping': 'badge-stopping'
+                }[r.status] || '';
+
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + r.time + '</td>' +
+                    '<td><span class="status-badge ' + badgeClass + '">' + r.status + '</span></td>';
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function clearHistory() {
+            await supabase.from('reports').delete().eq('machine_id', MACHINE_ID);
+            renderHistory();
+            showToast('History cleared', '#999');
+        }
+
+        /* ==============================================================
+           MAINTENANCE
+        ============================================================== */
+        async function submitMaintenance() {
+            var techId = document.getElementById('techId').value.trim();
+            var date   = document.getElementById('maintDate').value;
+
+            if (!techId || !date) {
+                showToast('Please enter your Technician ID and date', '#c62828');
+                return;
+            }
+
+            var checks = [];
+            for (var i = 1; i <= 8; i++) {
+                var cb = document.getElementById('check' + i);
+                checks.push({ item: cb.nextElementSibling.textContent, done: cb.checked });
+            }
+
+            // Calculate time metrics from operator status history
+            var now = new Date();
+            var allReports = await getReports();
+            var issueReport = null;
+            var techWorkingReport = null;
+
+            for (var j = 0; j < allReports.length; j++) {
+                var r = allReports[j];
+                if (!issueReport && (r.status === 'Needs Maintenance' || r.status === 'Stopping')) {
+                    issueReport = r;
+                }
+                if (!techWorkingReport && r.status === 'Technician Working') {
+                    techWorkingReport = r;
+                }
+                if (issueReport && techWorkingReport) break;
+            }
+
+            var waitingTimeMin = 0;
+            var maintenanceTimeMin = 0;
+            var downtimeMin = 0;
+
+            if (issueReport && issueReport.isoTime) {
+                var issueTime = new Date(issueReport.isoTime);
+
+                if (techWorkingReport && techWorkingReport.isoTime) {
+                    var techTime = new Date(techWorkingReport.isoTime);
+                    waitingTimeMin = Math.max(0, Math.round((techTime - issueTime) / 60000));
+                    maintenanceTimeMin = Math.max(0, Math.round((now - techTime) / 60000));
+                } else {
+                    maintenanceTimeMin = Math.max(0, Math.round((now - issueTime) / 60000));
+                }
+
+                downtimeMin = waitingTimeMin + maintenanceTimeMin;
+            }
+
+            var report = {
+                id: Date.now(),
+                isoTime: now.toISOString(),
+                techId: techId,
+                date: date,
+                shift: document.getElementById('maintShift').value,
+                machineId: MACHINE_ID,
+                location: LOCATION,
+                type: document.getElementById('maintType').value,
+                checklist: checks,
+                problem: document.getElementById('problemDesc').value.trim(),
+                actions: document.getElementById('actionsTaken').value.trim(),
+                parts: document.getElementById('partsReplaced').value.trim(),
+                postStatus: document.getElementById('postStatus').value,
+                notes: document.getElementById('addNotes').value.trim(),
+                waitingTime: waitingTimeMin,
+                maintenanceTime: maintenanceTimeMin,
+                downtime: downtimeMin
+            };
+
+            saveMaintenanceReport(report);
+
+            document.querySelectorAll('#maintenance-page .form-group input:not([readonly]), #maintenance-page .form-group textarea, #maintenance-page .form-group select').forEach(function(el) {
+                if (el.type === 'checkbox') el.checked = false;
+                else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                else el.value = '';
             });
 
-            var ws = XLSX.utils.json_to_sheet(rows);
-            var wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Maintenance Reports');
-
-            var colWidths = Object.keys(rows[0]).map(function(k) {
-                return { wch: Math.max(k.length + 2, 18) };
-            });
-            ws['!cols'] = colWidths;
-
-            var fileName = monthVal ? 'Maintenance_Reports_' + monthVal + '.xlsx' : 'Maintenance_Reports_All.xlsx';
-            XLSX.writeFile(wb, fileName);
-            showToast('Excel exported: ' + rows.length + ' reports');
+            var timeMsg = 'Waiting: ' + waitingTimeMin + 'min | Maintenance: ' + maintenanceTimeMin + 'min | Downtime: ' + downtimeMin + 'min';
+            showToast(timeMsg, '#4CAF50');
         }
 
         /* ==============================================================
            TOAST
         ============================================================== */
-        function showToast(msg) {
+        function showToast(msg, color) {
             var toast = document.getElementById('toast');
             toast.textContent = msg;
+            toast.style.background = color || '#1a1a2e';
             toast.classList.add('show');
             setTimeout(function() { toast.classList.remove('show'); }, 3000);
         }
-
-        /* ==============================================================
-           INIT
-        ============================================================== */
-        refreshAll();
-        toggleAutoRefresh();
     </script>
 
 </body>
