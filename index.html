@@ -175,8 +175,8 @@
         .circle-green { background: #4CAF50; box-shadow: 0 6px 20px rgba(76, 175, 80, 0.35); }
         .circle-green:hover { box-shadow: 0 8px 28px rgba(76, 175, 80, 0.5); }
 
-        .circle-yellow { background: #F9A825; box-shadow: 0 6px 20px rgba(249, 168, 37, 0.35); }
-        .circle-yellow:hover { box-shadow: 0 8px 28px rgba(249, 168, 37, 0.5); }
+        .circle-yellow { background: #888; box-shadow: 0 6px 20px rgba(136, 136, 136, 0.35); }
+        .circle-yellow:hover { box-shadow: 0 8px 28px rgba(136, 136, 136, 0.5); }
 
         .pulse { animation: pulse 0.5s ease; }
 
@@ -229,7 +229,7 @@
             letter-spacing: 0.3px;
         }
 
-        .badge-technician { background: #fff8e1; color: #F57F17; }
+        .badge-technician { background: #f0f0f0; color: #666; }
         .badge-maintenance { background: #e3f2fd; color: #1565C0; }
         .badge-working { background: #e8f5e9; color: #2E7D32; }
         .badge-stopping { background: #fde7e7; color: #c62828; }
@@ -455,6 +455,25 @@
 </head>
 <body>
 
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" style="position:fixed; inset:0; background:#f0f2f5; z-index:500; display:flex; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; padding:40px; width:90%; max-width:400px; box-shadow:0 8px 40px rgba(0,0,0,0.1); text-align:center;">
+            <img src="https://www.europe.fujikura.com/wp-content/uploads/2024/04/Fujikura-Logo-Colour.svg" alt="Fujikura" style="height:36px; margin-bottom:24px;">
+            <h2 style="font-size:1.1rem; font-weight:700; color:#1a1a2e; margin-bottom:4px;">Machine Login</h2>
+            <p style="font-size:0.82rem; color:#999; margin-bottom:24px;">Enter this machine's credentials to access the system</p>
+            <div style="text-align:left; margin-bottom:14px;">
+                <label style="display:block; margin-bottom:6px; font-size:0.8rem; font-weight:600; color:#555; text-transform:uppercase; letter-spacing:0.3px;">Machine ID</label>
+                <input type="text" id="loginCode" placeholder="e.g. SZL-015" style="width:100%; padding:11px 14px; border:1.5px solid #ddd; border-radius:8px; font-size:0.95rem; font-family:inherit; background:#fafafa;">
+            </div>
+            <div style="text-align:left; margin-bottom:20px;">
+                <label style="display:block; margin-bottom:6px; font-size:0.8rem; font-weight:600; color:#555; text-transform:uppercase; letter-spacing:0.3px;">PIN</label>
+                <input type="password" id="loginPin" placeholder="Enter machine PIN" style="width:100%; padding:11px 14px; border:1.5px solid #ddd; border-radius:8px; font-size:0.95rem; font-family:inherit; background:#fafafa;">
+            </div>
+            <button id="loginBtn" onclick="doLogin()" style="width:100%; padding:13px; background:#1a1a2e; color:#fff; border:none; border-radius:8px; font-size:0.95rem; font-weight:700; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px;">Login</button>
+            <p id="loginError" style="color:#c62828; font-size:0.82rem; margin-top:12px; display:none;"></p>
+        </div>
+    </div>
+
     <header>
         <div class="logo">
             <a href="https://www.europe.fujikura.com" target="_blank" rel="noopener" style="display:flex; align-items:center;">
@@ -470,6 +489,9 @@
             <button class="nav-btn" onclick="showPage('maintenance', this)">Maintenance Sheet</button>
             <button class="settings-btn" onclick="openSettings()" title="Machine Settings">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+            <button class="settings-btn" onclick="doLogout()" title="Logout" style="color:#c62828; border-color:#f5c6cb;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
         </div>
     </header>
@@ -506,7 +528,7 @@
             <p style="text-align:center; color:#999; margin-bottom:10px; font-size:0.9rem;">Select the current status of this machine</p>
             <div class="circles-container">
                 <button class="circle-btn circle-blue" onclick="reportStatus('Needs Maintenance', this)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     <span class="label">Needs<br>Maintenance</span>
                 </button>
                 <button class="circle-btn circle-red" onclick="reportStatus('Stopping', this)">
@@ -518,7 +540,7 @@
                     <span class="label">Working<br>Well</span>
                 </button>
                 <button class="circle-btn circle-yellow" onclick="reportStatus('Technician Working', this)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
                     <span class="label">Technician<br>Working</span>
                 </button>
             </div>
@@ -669,6 +691,28 @@
         </div>
     </div>
 
+    <!-- MACHINE INFO MODAL (post-login) -->
+    <div class="modal-overlay" id="machineInfoModal">
+        <div class="modal">
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                Machine Information
+            </h2>
+            <p style="font-size:0.82rem; color:#999; margin-bottom:16px;">Confirm or update this machine's details</p>
+            <div class="form-group">
+                <label>Machine ID</label>
+                <input type="text" id="infoMachineId" placeholder="e.g. SZL-015">
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="infoLocation" placeholder="e.g. Building A - Line 3">
+            </div>
+            <div class="modal-btns">
+                <button class="modal-save" onclick="saveMachineInfo()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SETTINGS MODAL -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal">
@@ -693,6 +737,16 @@
 
     <div class="toast" id="toast"></div>
 
+    <!-- DEACTIVATED OVERLAY -->
+    <div id="deactivatedOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:600; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; padding:48px; width:90%; max-width:420px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="64" height="64" style="margin-bottom:20px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <h2 style="font-size:1.3rem; font-weight:700; color:#c62828; margin-bottom:8px;">Machine Deactivated</h2>
+            <p style="font-size:0.9rem; color:#666; margin-bottom:24px; line-height:1.5;">This machine's access has been deactivated by the administrator.<br>Please contact your team leader.</p>
+            <button onclick="location.reload()" style="padding:12px 28px; background:#c62828; color:#fff; border:none; border-radius:8px; font-size:0.9rem; font-weight:700; cursor:pointer;">Try Again</button>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         /* ==============================================================
@@ -710,6 +764,168 @@
         var LOCATION   = localStorage.getItem('cfg_location')   || "Building A - Line 3";
 
         /* ==============================================================
+           LOGIN / LOGOUT
+        ============================================================== */
+        var currentAuth = JSON.parse(sessionStorage.getItem('machine_auth') || 'null');
+
+        function checkLogin() {
+            if (currentAuth) {
+                document.getElementById('loginScreen').style.display = 'none';
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+            }
+        }
+
+        async function doLogin() {
+            var code = document.getElementById('loginCode').value.trim();
+            var pin = document.getElementById('loginPin').value.trim();
+            var errEl = document.getElementById('loginError');
+            var btn = document.getElementById('loginBtn');
+
+            if (!code || !pin) {
+                errEl.textContent = 'Please enter Machine ID and PIN';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            btn.textContent = 'Logging in...';
+            btn.disabled = true;
+            errEl.style.display = 'none';
+
+            var { data, error } = await supabase
+                .from('machine_auth')
+                .select('*')
+                .eq('machine_id', code)
+                .eq('pin', pin)
+                .eq('active', true)
+                .limit(1);
+
+            btn.textContent = 'Login';
+            btn.disabled = false;
+
+            if (error || !data || data.length === 0) {
+                errEl.textContent = 'Invalid Machine ID or PIN';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            currentAuth = data[0];
+            sessionStorage.setItem('machine_auth', JSON.stringify(currentAuth));
+
+            checkLogin();
+            subscribeToAuth();
+            showMachineInfoModal();
+            showToast('Machine authenticated', '#4CAF50');
+        }
+
+        function showMachineInfoModal() {
+            var savedId = localStorage.getItem('cfg_machineId') || '';
+            var savedLoc = localStorage.getItem('cfg_location') || '';
+
+            document.getElementById('infoMachineId').value = currentAuth.machine_id || savedId;
+            document.getElementById('infoLocation').value = currentAuth.location || savedLoc;
+            document.getElementById('machineInfoModal').classList.add('open');
+        }
+
+        function saveMachineInfo() {
+            var newId = document.getElementById('infoMachineId').value.trim();
+            var newLoc = document.getElementById('infoLocation').value.trim();
+
+            if (!newId || !newLoc) {
+                showToast('Machine ID and Location are required', '#c62828');
+                return;
+            }
+
+            MACHINE_ID = newId;
+            LOCATION = newLoc;
+            localStorage.setItem('cfg_machineId', MACHINE_ID);
+            localStorage.setItem('cfg_location', LOCATION);
+
+            document.getElementById('machineInfoModal').classList.remove('open');
+            refreshDisplays();
+            renderHistory();
+            showToast('Machine info saved', '#4CAF50');
+        }
+
+        function doLogout() {
+            currentAuth = null;
+            sessionStorage.removeItem('machine_auth');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('loginCode').value = '';
+            document.getElementById('loginPin').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        async function checkPinChanged() {
+            if (!currentAuth) return;
+
+            var { data } = await supabase
+                .from('machine_auth')
+                .select('pin, active')
+                .eq('machine_id', currentAuth.machine_id)
+                .limit(1);
+
+            if (!data || data.length === 0 || !data[0].active) {
+                currentAuth = null;
+                sessionStorage.removeItem('machine_auth');
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('deactivatedOverlay').style.display = 'flex';
+                return;
+            }
+
+            if (data[0].pin !== currentAuth.pin) {
+                doLogout();
+                document.getElementById('loginError').textContent = 'PIN has been changed. Please re-login with the new PIN.';
+                document.getElementById('loginError').style.display = 'block';
+                return;
+            }
+        }
+
+        setInterval(checkPinChanged, 15000);
+
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) checkPinChanged();
+        });
+
+        function subscribeToAuth() {
+            if (!currentAuth) return;
+            supabase
+                .channel('machine-auth-' + currentAuth.machine_id)
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'machine_auth',
+                    filter: 'machine_id=eq.' + currentAuth.machine_id
+                }, function(payload) {
+                    var row = payload.new;
+                    if (!row || !row.active) {
+                        currentAuth = null;
+                        sessionStorage.removeItem('machine_auth');
+                        document.getElementById('loginScreen').style.display = 'none';
+                        document.getElementById('deactivatedOverlay').style.display = 'flex';
+                        return;
+                    }
+                    if (row.pin !== currentAuth.pin) {
+                        currentAuth.pin = row.pin;
+                        sessionStorage.setItem('machine_auth', JSON.stringify(currentAuth));
+                        doLogout();
+                        document.getElementById('loginError').textContent = 'PIN has been changed. Please re-login with the new PIN.';
+                        document.getElementById('loginError').style.display = 'block';
+                    }
+                })
+                .subscribe();
+        }
+
+        subscribeToAuth();
+
+        document.getElementById('loginPin').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') doLogin();
+        });
+        document.getElementById('loginCode').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') document.getElementById('loginPin').focus();
+        });
+
+        /* ==============================================================
            INIT
         ============================================================== */
         function refreshDisplays() {
@@ -719,6 +935,7 @@
             document.getElementById('maintDisplayLocation').textContent = LOCATION;
         }
 
+        checkLogin();
         refreshDisplays();
         document.getElementById('maintDate').valueAsDate = new Date();
         renderHistory();
@@ -834,6 +1051,7 @@
             document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
             document.getElementById(page + '-page').classList.add('active');
             btn.classList.add('active');
+            localStorage.setItem('currentPage', page);
         }
 
         /* ==============================================================
@@ -1003,6 +1221,24 @@
             toast.classList.add('show');
             setTimeout(function() { toast.classList.remove('show'); }, 3000);
         }
+
+        (function() {
+            var saved = localStorage.getItem('currentPage');
+            if (saved) {
+                var page = document.getElementById(saved + '-page');
+                if (page) {
+                    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+                    document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+                    page.classList.add('active');
+                    var btns = document.querySelectorAll('.nav-btn');
+                    btns.forEach(function(b) {
+                        if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'" + saved + "'") !== -1) {
+                            b.classList.add('active');
+                        }
+                    });
+                }
+            }
+        })();
     </script>
 
 </body>
